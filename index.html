@@ -3,800 +3,746 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0E0D0C">
 <title>Yumlist — discover places through people you trust</title>
 <meta name="description" content="A private social network for discovering restaurants through people you actually trust.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e0d0c' rx='8'/><circle cx='11' cy='16' r='8' fill='%23C4622D'/><circle cx='19' cy='16' r='8' fill='%23F5F0E8' fill-opacity='0.15'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --ink:       #0e0d0c;
-    --cream:     #F5F0E8;
-    --clay:      #C4622D;
-    --clay-dk:   #8C3E18;
-    --clay-lt:   #E8956D;
-    --charcoal:  #1E1D1B;
-    --mid:       #2A2926;
-    --parchment: #EDE8DF;
-    --offwhite:  #FAF8F4;
-    --sand:      #B89F87;
-    --muted:     rgba(245,240,232,0.38);
-    --serif: 'Cormorant Garamond', serif;
-    --sans: 'DM Sans', sans-serif;
+  :root{
+    --ink:#0E0D0C; --ink2:#141210;
+    --cream:#F5F0E8; --clay:#C4622D; --ember:#D9754A; --clay-deep:#A34E1F;
+    --sand:#B89F87; --muted:rgba(245,240,232,.4);
+    --serif:'Cormorant Garamond',serif; --sans:'DM Sans',sans-serif;
+    --line:rgba(245,240,232,.08);
   }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--ink);
-    color: var(--cream);
-    font-family: var(--sans);
-    font-weight: 300;
-    line-height: 1.6;
-    overflow-x: hidden;
-    cursor: none;
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1000px 700px at 90% -5%, rgba(196,98,45,.08), transparent 60%),
+      radial-gradient(800px 600px at -5% 60%, rgba(184,159,135,.05), transparent 55%),
+      var(--ink);
+    color:var(--cream);
+    font-family:var(--sans);
+    font-weight:300;
+    line-height:1.65;
+    overflow-x:hidden;
   }
+  ::selection{background:rgba(196,98,45,.4)}
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.03;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  a{color:inherit}
+  svg{display:block}
 
-  /* Custom cursor */
-  .cursor {
-    position: fixed;
-    width: 8px; height: 8px;
-    background: var(--cream);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: width 0.2s, height 0.2s, background 0.2s;
-    mix-blend-mode: difference;
-  }
-  .cursor.big {
-    width: 40px; height: 40px;
-  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+
+  .rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .rv.in{opacity:1;transform:none}
 
   /* Nav */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    padding: 28px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 100;
-    mix-blend-mode: difference;
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:rgba(14,13,12,.75);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
   }
-
-  .logo {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 300;
-    letter-spacing: -0.5px;
-    color: var(--cream);
-    text-decoration: none;
+  .nav-in{max-width:1120px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .nav-links{display:flex;align-items:center;gap:22px}
+  .nav-link{font-size:13px;color:rgba(245,240,232,.55);text-decoration:none;transition:color .2s}
+  .nav-link:hover{color:var(--cream)}
+  .nav-cta{
+    font-size:13px;font-weight:500;text-decoration:none;color:#FFF6EE;
+    background:linear-gradient(135deg,var(--ember),var(--clay) 60%,var(--clay-deep));
+    padding:9px 18px;border-radius:100px;
+    box-shadow:0 5px 16px -6px rgba(196,98,45,.55);
+    transition:transform .2s,filter .2s;
   }
-
-  .nav-cta {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--cream);
-    text-decoration: none;
-    letter-spacing: 0.04em;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-  }
-  .nav-cta:hover { opacity: 1; }
+  .nav-cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
 
   /* Hero */
-  .hero {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-    padding: 120px 40px 80px;
+  .hero{padding:150px 0 60px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+
+  .eyebrow{
+    display:flex;align-items:center;gap:9px;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(217,117,74,.8);margin-bottom:22px;
   }
-
-  /* Scattered photos */
-  .photos {
-    position: relative;
-    width: 100%;
-    max-width: 900px;
-    height: 420px;
-    margin-bottom: 80px;
-    flex-shrink: 0;
+  .eyebrow::before{
+    content:'';width:16px;height:9px;flex-shrink:0;
+    background:
+      radial-gradient(circle 4.5px at 4.5px 4.5px, var(--clay) 98%, transparent),
+      radial-gradient(circle 4.5px at 11.5px 4.5px, rgba(245,240,232,.3) 98%, transparent);
   }
-
-  .photo {
-    position: absolute;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
-    will-change: transform;
+  h1{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(42px,5.6vw,72px);
+    line-height:1.04;letter-spacing:-1.5px;
+    margin-bottom:24px;
   }
-
-  .photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    filter: saturate(0.85);
+  h1 em{font-style:italic;color:var(--ember)}
+  .hero-sub{font-size:17px;color:rgba(245,240,232,.55);max-width:440px;margin-bottom:34px;line-height:1.7}
+  .hero-ctas{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .btn-main{
+    font-size:15px;font-weight:500;text-decoration:none;color:#FFF6EE;
+    background:linear-gradient(135deg,var(--ember),var(--clay) 60%,var(--clay-deep));
+    padding:15px 30px;border-radius:100px;border:none;cursor:pointer;font-family:var(--sans);
+    box-shadow:0 8px 24px -8px rgba(196,98,45,.6), inset 0 1px 0 rgba(255,255,255,.15);
+    transition:transform .2s,filter .2s,box-shadow .2s;
+    display:inline-block;
   }
+  .btn-main:hover{transform:translateY(-2px);filter:brightness(1.07)}
+  .hero-note{font-size:13px;color:rgba(245,240,232,.4)}
+  .hero-note b{color:rgba(245,240,232,.7);font-weight:500}
 
-  .photo:nth-child(1) { width: 210px; height: 280px; left: 2%;  top: 20px; transform: rotate(-6deg); }
-  .photo:nth-child(2) { width: 180px; height: 240px; left: 18%; top: 60px; transform: rotate(3deg); }
-  .photo:nth-child(3) { width: 230px; height: 300px; left: 35%; top: 0px;  transform: rotate(-2deg); z-index:2; }
-  .photo:nth-child(4) { width: 190px; height: 250px; left: 58%; top: 50px; transform: rotate(5deg); }
-  .photo:nth-child(5) { width: 175px; height: 235px; left: 74%; top: 25px; transform: rotate(-4deg); }
-
-  .photo:hover { transform: rotate(0deg) scale(1.04) !important; z-index: 10; }
-
-  /* Hero text */
-  .hero-text {
-    text-align: center;
-    position: relative;
-    z-index: 2;
+  /* Phone mockup */
+  .phone-zone{position:relative;display:flex;justify-content:center;padding:20px 0}
+  .phone{
+    width:min(320px,80vw);
+    border-radius:44px;
+    background:#1B1917;
+    border:1px solid rgba(245,240,232,.14);
+    box-shadow:
+      0 50px 100px -30px rgba(0,0,0,.8),
+      0 20px 50px -20px rgba(196,98,45,.15),
+      inset 0 0 0 8px #060505;
+    padding:14px;
+    position:relative;
+    transform:rotate(2.5deg);
+    transition:transform .6s cubic-bezier(.2,.7,.2,1);
   }
-
-  .hero-eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 20px;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
+  .phone:hover{transform:rotate(0.5deg) translateY(-6px)}
+  .phone-screen{border-radius:32px;overflow:hidden;background:var(--ink2)}
+  .phone-notch{
+    width:110px;height:26px;background:#060505;border-radius:0 0 16px 16px;
+    margin:0 auto;position:relative;z-index:5;margin-bottom:-26px;
   }
-
-  .hero-title {
-    font-family: var(--serif);
-    font-size: clamp(52px, 8vw, 96px);
-    font-weight: 300;
-    line-height: 0.92;
-    letter-spacing: -2px;
-    margin-bottom: 28px;
-    opacity: 0;
-    transform: translateY(20px);
-    animation: up 1s 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+  .app-header{display:flex;align-items:center;justify-content:space-between;padding:38px 16px 12px}
+  .app-logo{display:flex;align-items:center;gap:7px;font-family:var(--serif);font-size:17px;letter-spacing:-.5px}
+  .app-logo i{display:block;width:20px;height:12px;
+    background:
+      radial-gradient(circle 6px at 6px 6px, var(--clay) 98%, transparent),
+      radial-gradient(circle 6px at 14px 6px, rgba(245,240,232,.2) 98%, transparent);
   }
+  .app-bell{width:16px;height:16px;border:1.4px solid rgba(245,240,232,.4);border-radius:5px 5px 7px 7px;border-top:none;position:relative}
+  .app-bell::before{content:'';position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:8px;height:8px;border:1.4px solid rgba(245,240,232,.4);border-bottom:none;border-radius:6px 6px 0 0}
 
-  .hero-title em {
-    font-style: italic;
-    color: rgba(245,240,232,0.45);
+  .feed-card{margin:6px 12px 14px;border-radius:18px;background:#191715;border:1px solid rgba(245,240,232,.07);overflow:hidden}
+  .feed-user{display:flex;align-items:center;gap:9px;padding:11px 13px}
+  .feed-avatar{width:28px;height:28px;border-radius:50%;overflow:hidden;border:1px solid rgba(245,240,232,.15);flex-shrink:0}
+  .feed-avatar svg{width:100%;height:100%}
+  .feed-name{font-size:12px;font-weight:500;line-height:1.2}
+  .feed-place{font-size:10.5px;color:rgba(245,240,232,.45)}
+  .feed-photo{position:relative}
+  .feed-photo>svg{width:100%;height:230px}
+  .feed-selfie{
+    position:absolute;top:10px;left:10px;
+    width:64px;height:84px;border-radius:12px;overflow:hidden;
+    border:2px solid rgba(245,240,232,.9);
+    box-shadow:0 6px 16px rgba(0,0,0,.5);
   }
-
-  .hero-sub {
-    font-size: 15px;
-    font-weight: 300;
-    color: var(--muted);
-    max-width: 360px;
-    margin: 0 auto 48px;
-    line-height: 1.7;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+  .feed-selfie svg{width:100%;height:100%}
+  .feed-ratings{display:flex;gap:6px;padding:11px 13px 4px;flex-wrap:wrap}
+  .pill{
+    font-size:10px;font-weight:500;letter-spacing:.03em;
+    padding:4px 9px;border-radius:100px;
+    background:rgba(196,98,45,.14);border:1px solid rgba(196,98,45,.25);color:var(--ember);
   }
+  .pill.alt{background:rgba(245,240,232,.06);border-color:rgba(245,240,232,.12);color:rgba(245,240,232,.6)}
+  .feed-caption{font-size:11.5px;color:rgba(245,240,232,.65);padding:4px 13px 12px;line-height:1.5}
+  .feed-actions{display:flex;align-items:center;justify-content:space-between;padding:0 13px 13px}
+  .feed-save{font-size:10.5px;font-weight:500;color:var(--ink);background:var(--cream);padding:6px 13px;border-radius:100px}
+  .feed-hearts{font-size:10.5px;color:rgba(245,240,232,.4)}
 
-  /* Download buttons */
-  .btns {
-    display: flex;
-    gap: 14px;
-    justify-content: center;
-    flex-wrap: wrap;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+  .float{
+    position:absolute;z-index:5;
+    background:rgba(25,22,20,.92);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(245,240,232,.14);
+    border-radius:14px;
+    padding:10px 14px;
+    box-shadow:0 16px 40px -12px rgba(0,0,0,.6);
+    font-size:12px;
+    animation:bob 5s ease-in-out infinite;
   }
+  .float b{font-weight:500}
+  .float-1{top:12%;left:-4%;animation-delay:.5s}
+  .float-2{bottom:14%;right:-6%}
+  .float .fl-sub{font-size:10px;color:rgba(245,240,232,.45);margin-top:2px}
+  .float .fl-clay{color:var(--ember)}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 24px;
-    border-radius: 100px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    transition: all 0.25s ease;
-    border: 1px solid rgba(245,240,232,0.2);
-    color: var(--cream);
-    background: rgba(245,240,232,0.06);
-    backdrop-filter: blur(10px);
+  /* Marquee strip */
+  .strip{overflow:hidden;padding:54px 0 10px}
+  .strip-track{display:flex;gap:14px;width:max-content;animation:slide 36s linear infinite}
+  .strip:hover .strip-track{animation-play-state:paused}
+  .strip-item{
+    width:210px;height:140px;border-radius:14px;overflow:hidden;
+    border:1px solid rgba(245,240,232,.08);
+    transition:transform .3s;flex-shrink:0;
   }
+  .strip-item:hover{transform:translateY(-5px) rotate(-1deg)}
+  .strip-item svg{width:100%;height:100%}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-  .btn:hover {
-    background: var(--cream);
-    color: var(--ink);
-    border-color: var(--cream);
-    transform: translateY(-2px);
+  /* Sections */
+  section{padding:110px 0}
+  .sec-label{
+    display:flex;align-items:center;gap:9px;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(217,117,74,.8);margin-bottom:18px;
   }
-
-  .btn svg { flex-shrink: 0; }
-
-  .btn-primary {
-    background: var(--cream);
-    color: var(--ink);
-    border-color: var(--cream);
+  .sec-label::before{
+    content:'';width:16px;height:9px;flex-shrink:0;
+    background:
+      radial-gradient(circle 4.5px at 4.5px 4.5px, var(--clay) 98%, transparent),
+      radial-gradient(circle 4.5px at 11.5px 4.5px, rgba(245,240,232,.3) 98%, transparent);
   }
-  .btn-primary:hover {
-    background: rgba(245,240,232,0.88);
-    transform: translateY(-2px);
+  h2{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(32px,4.2vw,52px);
+    line-height:1.08;letter-spacing:-1px;
+    margin-bottom:22px;
   }
+  h2 em{font-style:italic;color:var(--ember)}
+  .sec-sub{font-size:16px;color:rgba(245,240,232,.55);max-width:520px;line-height:1.75}
 
-  /* Divider line */
-  .divider {
-    width: 1px;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, rgba(245,240,232,0.2), transparent);
-    margin: 0 auto;
+  .idea-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:60px;align-items:center;margin-top:10px}
+  .posts{display:flex;flex-direction:column;gap:16px}
+  .post{
+    display:flex;gap:14px;align-items:center;
+    background:linear-gradient(160deg,rgba(245,240,232,.05),rgba(245,240,232,.015));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px;
+    transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;
   }
-
-  /* Concept section */
-  .concept {
-    padding: 100px 40px;
-    max-width: 1000px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
+  .post:hover{transform:translateX(6px);border-color:rgba(196,98,45,.3);box-shadow:0 16px 40px -18px rgba(0,0,0,.6)}
+  .post:nth-child(2){margin-left:26px}
+  .post-photo{position:relative;flex-shrink:0}
+  .post-photo>.dish{width:88px;height:88px;border-radius:12px;overflow:hidden}
+  .post-photo>.dish svg{width:100%;height:100%}
+  .post-face{
+    position:absolute;bottom:-6px;right:-6px;
+    width:34px;height:34px;border-radius:50%;overflow:hidden;
+    border:2px solid var(--ink);
   }
+  .post-face svg{width:100%;height:100%}
+  .post-info{min-width:0}
+  .post-name{font-size:13px;font-weight:500}
+  .post-handle{font-size:11px;color:rgba(217,117,74,.75);margin-bottom:5px}
+  .post-place{font-family:var(--serif);font-size:18px;letter-spacing:-.3px;line-height:1.15}
+  .post-hood{font-size:11.5px;color:rgba(245,240,232,.45);margin-bottom:7px}
+  .post-tags{display:flex;gap:5px;flex-wrap:wrap}
+  .ptag{font-size:9.5px;letter-spacing:.05em;padding:3px 8px;border-radius:100px;background:rgba(196,98,45,.1);border:1px solid rgba(196,98,45,.18);color:rgba(245,240,232,.55)}
 
-  .concept-label {
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 20px;
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:54px}
+  .step{
+    background:linear-gradient(165deg,rgba(245,240,232,.045),rgba(245,240,232,.012));
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:32px 28px;
+    transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;
   }
-
-  .concept-title {
-    font-family: var(--serif);
-    font-size: clamp(36px, 4vw, 54px);
-    font-weight: 300;
-    line-height: 1.1;
-    letter-spacing: -1px;
-    margin-bottom: 24px;
+  .step:hover{transform:translateY(-5px);border-color:rgba(196,98,45,.28);box-shadow:0 20px 50px -20px rgba(0,0,0,.6)}
+  .step-num{
+    font-family:var(--serif);font-size:64px;font-weight:300;line-height:1;
+    color:transparent;-webkit-text-stroke:1px rgba(196,98,45,.5);
+    margin-bottom:18px;
   }
-
-  .concept-body {
-    font-size: 15px;
-    font-weight: 300;
-    color: rgba(245,240,232,0.55);
-    line-height: 1.8;
-  }
-
-  .concept-visual {
-    position: relative;
-    height: 400px;
-  }
-
-  .concept-card {
-    position: absolute;
-    background: rgba(245,240,232,0.04);
-    border: 1px solid rgba(245,240,232,0.1);
-    border-radius: 16px;
-    padding: 20px;
-    width: 260px;
-  }
-
-  .concept-card:nth-child(1) { top: 0; left: 0; }
-  .concept-card:nth-child(2) { top: 130px; left: 60px; background: rgba(196,98,45,0.08); border-color: rgba(196,98,45,0.25); }
-  .concept-card:nth-child(3) { top: 260px; left: 20px; }
-
-  .card-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-
-  .card-avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: rgba(245,240,232,0.1);
-    flex-shrink: 0;
-  }
-  .card-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-  .card-name { font-size: 13px; font-weight: 400; }
-  .card-handle { font-size: 11px; color: var(--muted); }
-
-  .card-place {
-    font-family: var(--serif);
-    font-size: 19px;
-    font-weight: 400;
-    margin-bottom: 4px;
-  }
-
-  .card-loc {
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .card-tags {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-  }
-
-  .tag {
-    font-size: 10px;
-    padding: 3px 9px;
-    border-radius: 20px;
-    background: rgba(245,240,232,0.08);
-    color: rgba(245,240,232,0.6);
-    letter-spacing: 0.04em;
-  }
-
-  /* Pillars */
-  .pillars {
-    padding: 80px 40px 120px;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .pillars-header {
-    text-align: center;
-    margin-bottom: 64px;
-  }
-
-  .pillars-title {
-    font-family: var(--serif);
-    font-size: clamp(32px, 4vw, 48px);
-    font-weight: 300;
-    line-height: 1.1;
-    letter-spacing: -1px;
-  }
-
-  .pillars-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    border: 1px solid rgba(245,240,232,0.08);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .pillar {
-    padding: 40px 32px;
-    border-right: 1px solid rgba(245,240,232,0.08);
-    position: relative;
-  }
-  .pillar:last-child { border-right: none; }
-
-  .pillar-num {
-    font-family: var(--serif);
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    margin-bottom: 24px;
-  }
-
-  .pillar-title {
-    font-family: var(--serif);
-    font-size: 24px;
-    font-weight: 400;
-    margin-bottom: 12px;
-    line-height: 1.15;
-  }
-
-  .pillar-body {
-    font-size: 13px;
-    font-weight: 300;
-    color: rgba(245,240,232,0.45);
-    line-height: 1.7;
-  }
+  .step h3{font-family:var(--serif);font-size:23px;font-weight:400;letter-spacing:-.3px;line-height:1.2;margin-bottom:12px}
+  .step p{font-size:14px;color:rgba(245,240,232,.55);line-height:1.7}
 
   /* Waitlist */
-  .waitlist {
-    padding: 100px 40px 80px;
-    text-align: center;
-    max-width: 560px;
-    margin: 0 auto;
+  .waitlist{padding:130px 0;text-align:center;position:relative}
+  .waitlist::before{
+    content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:640px;height:640px;border-radius:50%;
+    background:radial-gradient(circle,rgba(196,98,45,.1),transparent 65%);
+    filter:blur(24px);pointer-events:none;
   }
-
-  .waitlist-title {
-    font-family: var(--serif);
-    font-size: clamp(36px, 5vw, 60px);
-    font-weight: 300;
-    line-height: 1.05;
-    letter-spacing: -1.5px;
-    margin-bottom: 16px;
+  .waitlist .wrap{position:relative}
+  .waitlist h2{margin-bottom:16px}
+  .waitlist .sec-sub{margin:0 auto 40px}
+  .wl-form{display:flex;gap:10px;max-width:440px;margin:0 auto}
+  .wl-input{
+    flex:1;padding:15px 20px;
+    background:rgba(245,240,232,.05);
+    border:1px solid rgba(245,240,232,.15);
+    border-radius:100px;
+    color:var(--cream);font-family:var(--sans);font-size:14px;font-weight:300;
+    outline:none;transition:border-color .2s,box-shadow .2s;
+    min-width:0;
   }
+  .wl-input::placeholder{color:rgba(245,240,232,.28)}
+  .wl-input:focus{border-color:rgba(196,98,45,.6);box-shadow:0 0 0 3px rgba(196,98,45,.16)}
+  .wl-msg{margin-top:18px;font-size:14px;min-height:22px}
+  .wl-msg.ok{color:rgb(120,215,155)}
+  .wl-msg.err{color:var(--ember)}
+  .wl-note{margin-top:8px;font-size:12px;color:rgba(245,240,232,.35)}
 
-  .waitlist-sub {
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 40px;
+  footer{border-top:1px solid var(--line);padding:44px 0}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .foot-logo{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:20px;letter-spacing:-.5px}
+  .foot-logo i{display:block;width:24px;height:14px;
+    background:
+      radial-gradient(circle 7px at 7px 7px, var(--clay) 98%, transparent),
+      radial-gradient(circle 7px at 17px 7px, rgba(245,240,232,.18) 98%, transparent);
   }
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap}
+  .foot-links a{font-size:13px;color:rgba(245,240,232,.45);text-decoration:none;transition:color .2s}
+  .foot-links a:hover{color:var(--cream)}
 
-  .waitlist-form {
-    display: flex;
-    gap: 10px;
-    max-width: 400px;
-    margin: 0 auto;
+  @media(max-width:920px){
+    .hero{padding:120px 0 40px}
+    .hero-grid{grid-template-columns:1fr;gap:56px}
+    .phone-zone{order:2}
+    .idea-grid{grid-template-columns:1fr;gap:44px}
+    .steps{grid-template-columns:1fr;max-width:460px}
+    .post:nth-child(2){margin-left:0}
+    .float-1{left:2%}
+    .float-2{right:2%}
+    section{padding:80px 0}
   }
-
-  .waitlist-input {
-    flex: 1;
-    padding: 14px 18px;
-    background: rgba(245,240,232,0.06);
-    border: 1px solid rgba(245,240,232,0.15);
-    border-radius: 100px;
-    color: var(--cream);
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 300;
-    outline: none;
-    transition: border-color 0.2s;
+  @media(max-width:560px){
+    .wl-form{flex-direction:column}
+    .btn-main{width:100%;text-align:center}
+    .nav-links .nav-link{display:none}
+    h1{font-size:40px}
   }
-  .waitlist-input::placeholder { color: rgba(245,240,232,0.3); }
-  .waitlist-input:focus { border-color: rgba(245,240,232,0.4); }
-
-  .waitlist-btn {
-    padding: 14px 24px;
-    background: var(--cream);
-    color: var(--ink);
-    border: none;
-    border-radius: 100px;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: none;
-    transition: opacity 0.2s, transform 0.2s;
-    white-space: nowrap;
-  }
-  .waitlist-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-
-  .waitlist-success {
-    display: none;
-    font-size: 14px;
-    color: rgba(245,240,232,0.55);
-    margin-top: 20px;
-  }
-  .waitlist-success.show { display: block; }
-
-  /* Footer */
-  footer {
-    padding: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid rgba(245,240,232,0.07);
-  }
-
-  .footer-logo {
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 300;
-    color: rgba(245,240,232,0.35);
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 28px;
-  }
-
-  .footer-link {
-    font-size: 12px;
-    color: rgba(245,240,232,0.25);
-    text-decoration: none;
-    letter-spacing: 0.04em;
-    transition: color 0.2s;
-  }
-  .footer-link:hover { color: rgba(245,240,232,0.7); }
-
-  /* Animations */
-  @keyframes up {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Grain overlay */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.028;
-    pointer-events: none;
-    z-index: 1000;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    nav { padding: 20px 24px; }
-
-    .hero { padding: 100px 24px 60px; }
-
-    .photos { height: 280px; margin-bottom: 48px; }
-    .photo:nth-child(1) { width: 140px; height: 185px; }
-    .photo:nth-child(2) { width: 120px; height: 160px; left: 22%; }
-    .photo:nth-child(3) { width: 155px; height: 200px; left: 38%; }
-    .photo:nth-child(4) { width: 128px; height: 168px; left: 60%; }
-    .photo:nth-child(5) { display: none; }
-
-    .concept { grid-template-columns: 1fr; gap: 48px; padding: 60px 24px; }
-    .concept-visual { height: 320px; }
-    .concept-card { width: 220px; }
-
-    .pillars { padding: 60px 24px 80px; }
-    .pillars-grid { grid-template-columns: 1fr; }
-    .pillar { border-right: none; border-bottom: 1px solid rgba(245,240,232,0.08); }
-    .pillar:last-child { border-bottom: none; }
-
-    .waitlist { padding: 60px 24px; }
-    .waitlist-form { flex-direction: column; }
-
-    footer { flex-direction: column; gap: 20px; padding: 28px 24px; }
-    .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+    .rv{opacity:1;transform:none}
+    html{scroll-behavior:auto}
   }
 </style>
 </head>
 <body>
 
-<div class="cursor" id="cursor"></div>
+<!-- Illustration library (SVG symbols, no external deps) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Gambas al ajillo -->
+    <symbol id="dish-gambas" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#2A211B"/>
+      <circle cx="60" cy="30" r="26" fill="#241C16"/>
+      <circle cx="255" cy="175" r="34" fill="#241C16"/>
+      <rect x="60" y="94" width="30" height="12" rx="6" fill="#7A3B1F"/>
+      <rect x="210" y="94" width="30" height="12" rx="6" fill="#7A3B1F"/>
+      <circle cx="150" cy="100" r="78" fill="#8F4526"/>
+      <circle cx="150" cy="100" r="66" fill="#C4622D"/>
+      <circle cx="150" cy="100" r="58" fill="#D98E3F" opacity=".9"/>
+      <g fill="#E8836B" stroke="#B85538" stroke-width="2">
+        <path d="M118 78 q18 -16 34 0 q-4 14 -20 14 q-14 -2 -14 -14 Z"/>
+        <path d="M162 70 q20 -10 32 6 q-6 13 -21 10 q-13 -4 -11 -16 Z"/>
+        <path d="M110 112 q14 -18 32 -8 q0 15 -15 18 q-15 1 -17 -10 Z"/>
+        <path d="M158 116 q19 -12 33 2 q-5 14 -21 12 q-14 -3 -12 -14 Z"/>
+        <path d="M136 138 q17 -12 31 0 q-4 13 -19 12 q-13 -1 -12 -12 Z"/>
+      </g>
+      <g fill="#F5F0E8" opacity=".85">
+        <ellipse cx="132" cy="94" rx="5" ry="2.4" transform="rotate(-20 132 94)"/>
+        <ellipse cx="172" cy="98" rx="5" ry="2.4" transform="rotate(15 172 98)"/>
+        <ellipse cx="150" cy="122" rx="5" ry="2.4" transform="rotate(-8 150 122)"/>
+        <ellipse cx="184" cy="118" rx="4" ry="2" transform="rotate(22 184 118)"/>
+      </g>
+      <g fill="#5F7043">
+        <circle cx="126" cy="84" r="2.2"/><circle cx="164" cy="80" r="2"/>
+        <circle cx="142" cy="108" r="2.2"/><circle cx="176" cy="108" r="2"/>
+        <circle cx="156" cy="132" r="2"/>
+      </g>
+      <path d="M96 76 a58 58 0 0 1 34 -30" fill="none" stroke="#F2B366" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+    </symbol>
 
-<!-- Nav -->
+    <!-- Flat white / latte art -->
+    <symbol id="dish-latte" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#241D18"/>
+      <rect x="0" y="150" width="300" height="4" fill="#1B1511"/>
+      <rect x="0" y="46" width="300" height="3" fill="#1B1511"/>
+      <circle cx="150" cy="100" r="82" fill="#E8DFD2"/>
+      <circle cx="150" cy="100" r="82" fill="none" stroke="#CFC4B2" stroke-width="3"/>
+      <circle cx="150" cy="100" r="56" fill="#F5F0E8"/>
+      <circle cx="150" cy="100" r="47" fill="#6B4226"/>
+      <circle cx="150" cy="100" r="47" fill="none" stroke="#5A3620" stroke-width="2"/>
+      <path d="M150 66 q-14 12 -12 26 q2 12 12 14 q10 -2 12 -14 q2 -14 -12 -26 Z" fill="#E8DFD2" opacity=".95"/>
+      <path d="M150 76 v56" stroke="#6B4226" stroke-width="2.4"/>
+      <path d="M150 104 q-10 6 -10 16 q4 8 10 8 q6 0 10 -8 q0 -10 -10 -16 Z" fill="#E8DFD2" opacity=".9"/>
+      <rect x="222" y="92" width="52" height="8" rx="4" fill="#CFC4B2"/>
+      <ellipse cx="222" cy="96" rx="12" ry="9" fill="#CFC4B2"/>
+    </symbol>
+
+    <!-- Brunch / tosta aguacate y huevo -->
+    <symbol id="dish-brunch" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#2A241C"/>
+      <circle cx="44" cy="168" r="24" fill="#221D16"/>
+      <circle cx="150" cy="100" r="80" fill="#F5F0E8"/>
+      <circle cx="150" cy="100" r="80" fill="none" stroke="#D9CFBE" stroke-width="3"/>
+      <circle cx="150" cy="100" r="66" fill="none" stroke="#E4DACA" stroke-width="1.5"/>
+      <rect x="102" y="72" width="96" height="60" rx="8" fill="#C89158" transform="rotate(-6 150 102)"/>
+      <rect x="102" y="72" width="96" height="60" rx="8" fill="none" stroke="#A87441" stroke-width="2.5" transform="rotate(-6 150 102)"/>
+      <g transform="rotate(-6 150 102)" fill="#7D8C5A">
+        <path d="M110 84 q14 -8 24 0 q-2 12 -12 12 q-10 0 -12 -12 Z"/>
+        <path d="M138 80 q14 -8 24 0 q-2 12 -12 12 q-10 0 -12 -12 Z"/>
+        <path d="M166 84 q14 -8 22 0 q-2 12 -11 12 q-9 0 -11 -12 Z"/>
+      </g>
+      <circle cx="158" cy="116" r="19" fill="#FBF7EF"/>
+      <ellipse cx="158" cy="116" rx="19" ry="17" fill="none" stroke="#EDE4D3" stroke-width="2"/>
+      <circle cx="158" cy="115" r="9" fill="#E8A33D"/>
+      <circle cx="155" cy="112" r="3" fill="#F2BC66"/>
+      <circle cx="108" cy="132" r="8" fill="#C24B3A"/><circle cx="122" cy="140" r="7" fill="#C24B3A"/>
+      <circle cx="106" cy="130" r="2.5" fill="#E07A5F"/><circle cx="120" cy="138" r="2" fill="#E07A5F"/>
+      <g fill="#5F7043"><circle cx="184" cy="140" r="2"/><circle cx="176" cy="146" r="1.8"/><circle cx="190" cy="146" r="1.6"/></g>
+    </symbol>
+
+    <!-- Pasta / tagliatelle -->
+    <symbol id="dish-pasta" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#262019"/>
+      <circle cx="256" cy="34" r="30" fill="#1E1913"/>
+      <circle cx="150" cy="100" r="78" fill="#3A2E24"/>
+      <circle cx="150" cy="100" r="64" fill="#2C231B"/>
+      <g fill="none" stroke="#E8C989" stroke-width="7" stroke-linecap="round">
+        <path d="M104 96 q22 -30 52 -14 q28 14 44 -6"/>
+        <path d="M100 114 q30 -22 56 -6 q24 14 46 2"/>
+        <path d="M110 132 q26 -16 50 -4 q22 10 38 0"/>
+        <path d="M120 78 q20 -14 42 -4"/>
+      </g>
+      <g fill="none" stroke="#D9B26E" stroke-width="4" stroke-linecap="round" opacity=".8">
+        <path d="M112 104 q26 -18 50 -6"/>
+        <path d="M124 122 q22 -12 44 -4"/>
+      </g>
+      <g fill="#5F7043">
+        <ellipse cx="146" cy="86" rx="7" ry="4" transform="rotate(-18 146 86)"/>
+        <ellipse cx="172" cy="112" rx="7" ry="4" transform="rotate(14 172 112)"/>
+        <ellipse cx="136" cy="126" rx="6" ry="3.5" transform="rotate(-8 136 126)"/>
+      </g>
+      <g fill="#F5F0E8" opacity=".75">
+        <circle cx="158" cy="94" r="2"/><circle cx="132" cy="108" r="1.8"/>
+        <circle cx="168" cy="128" r="1.8"/><circle cx="150" cy="118" r="1.6"/>
+      </g>
+    </symbol>
+
+    <!-- Vermut / aperitivo -->
+    <symbol id="dish-vermut" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#221C16"/>
+      <path d="M0 60 q60 8 120 0 t120 4 t60 -2" stroke="#1A1510" stroke-width="2" fill="none"/>
+      <path d="M0 150 q80 -6 160 2 t140 -4" stroke="#1A1510" stroke-width="2" fill="none"/>
+      <circle cx="108" cy="96" r="52" fill="#5A1F1E"/>
+      <circle cx="108" cy="96" r="52" fill="none" stroke="#E8DFD2" stroke-width="4"/>
+      <circle cx="108" cy="96" r="44" fill="#7A2E2A"/>
+      <path d="M76 74 a44 44 0 0 1 28 -20" fill="none" stroke="#B85347" stroke-width="6" stroke-linecap="round" opacity=".7"/>
+      <path d="M140 64 a10 22 0 0 1 4 30" fill="#E8A33D" stroke="#C4832A" stroke-width="2"/>
+      <circle cx="212" cy="126" r="44" fill="#E8DFD2"/>
+      <circle cx="212" cy="126" r="44" fill="none" stroke="#CFC4B2" stroke-width="3"/>
+      <g fill="#7D8C5A" stroke="#5F7043" stroke-width="1.5">
+        <circle cx="198" cy="118" r="9"/><circle cx="216" cy="130" r="9"/><circle cx="230" cy="114" r="9"/>
+      </g>
+      <circle cx="198" cy="118" r="3" fill="#C24B3A"/>
+      <circle cx="216" cy="130" r="3" fill="#C24B3A"/>
+      <circle cx="230" cy="114" r="3" fill="#C24B3A"/>
+      <line x1="186" y1="104" x2="240" y2="140" stroke="#C89158" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Croissant + café -->
+    <symbol id="dish-croissant" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#28211A"/>
+      <circle cx="150" cy="104" r="76" fill="#F5F0E8"/>
+      <circle cx="150" cy="104" r="76" fill="none" stroke="#D9CFBE" stroke-width="3"/>
+      <path d="M96 108 q10 -34 54 -36 q44 2 54 36 q-8 18 -28 12 q-6 -16 -26 -16 q-20 0 -26 16 q-20 6 -28 -12 Z" fill="#C89158" stroke="#A87441" stroke-width="2.5"/>
+      <path d="M124 84 q4 20 0 32 M150 76 q2 22 0 40 M176 84 q-4 20 0 32" stroke="#A87441" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="248" cy="42" r="26" fill="#6B4226"/>
+      <circle cx="248" cy="42" r="26" fill="none" stroke="#F5F0E8" stroke-width="4"/>
+      <path d="M240 36 q8 8 0 14" stroke="#E8DFD2" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <g fill="#C89158" opacity=".8"><circle cx="118" cy="128" r="1.8"/><circle cx="164" cy="132" r="1.8"/><circle cx="184" cy="122" r="1.6"/></g>
+    </symbol>
+
+    <!-- Avatars -->
+    <symbol id="face-maria" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#B85538"/>
+      <circle cx="76" cy="20" r="22" fill="#C4622D" opacity=".55"/>
+      <path d="M50 30 q-20 0 -22 24 l-2 46 h48 l-2 -46 q-2 -24 -22 -24 Z" fill="#4A3226"/>
+      <circle cx="50" cy="46" r="17" fill="#E8B48E"/>
+      <path d="M33 44 q0 -18 17 -18 q17 0 17 18 q-6 -10 -17 -10 q-11 0 -17 10 Z" fill="#4A3226"/>
+      <path d="M22 100 q4 -26 28 -26 q24 0 28 26 Z" fill="#8F4526"/>
+      <circle cx="34" cy="52" r="2.6" fill="#C89158"/>
+    </symbol>
+    <symbol id="face-luca" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#4A5A48"/>
+      <circle cx="22" cy="78" r="24" fill="#5F7043" opacity=".5"/>
+      <circle cx="50" cy="46" r="17" fill="#D9A176"/>
+      <path d="M34 42 q2 -16 16 -16 q14 0 16 16 q-4 -8 -16 -8 q-12 0 -16 8 Z" fill="#2E2620"/>
+      <path d="M38 54 q4 8 12 8 q8 0 12 -8 l0 6 q-4 7 -12 7 q-8 0 -12 -7 Z" fill="#2E2620"/>
+      <path d="M22 100 q4 -26 28 -26 q24 0 28 26 Z" fill="#33402F"/>
+    </symbol>
+    <symbol id="face-nina" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#B89F87"/>
+      <circle cx="80" cy="76" r="24" fill="#C9B29A" opacity=".6"/>
+      <circle cx="50" cy="24" r="9" fill="#2E2620"/>
+      <circle cx="50" cy="46" r="17" fill="#C68863"/>
+      <path d="M33 46 q-2 -20 17 -20 q19 0 17 20 q-4 -12 -17 -12 q-13 0 -17 12 Z" fill="#2E2620"/>
+      <path d="M22 100 q4 -26 28 -26 q24 0 28 26 Z" fill="#8F6A4E"/>
+      <circle cx="35" cy="52" r="2.4" fill="#C24B3A" opacity=".8"/>
+    </symbol>
+
+    <!-- Selfie vertical Maria (BeReal-style) -->
+    <symbol id="selfie-maria" viewBox="0 0 64 84">
+      <rect width="64" height="84" fill="#3A2A20"/>
+      <circle cx="14" cy="14" r="9" fill="#C4622D" opacity=".5"/>
+      <circle cx="54" cy="30" r="6" fill="#D98E3F" opacity=".4"/>
+      <circle cx="48" cy="10" r="4" fill="#F2B366" opacity=".35"/>
+      <circle cx="32" cy="34" r="14" fill="#E8B48E"/>
+      <path d="M18 32 q0 -15 14 -15 q14 0 14 15 q-5 -8 -14 -8 q-9 0 -14 8 Z" fill="#4A3226"/>
+      <path d="M10 84 q3 -22 22 -22 q19 0 22 22 Z" fill="#8F4526"/>
+      <path d="M27 42 q5 4 10 0" stroke="#B87A54" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
 <nav>
-  <a href="/" class="logo" aria-label="yumlist">
-    <svg width="120" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="11" cy="18" r="10" fill="#C4622D"/>
-      <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.1" stroke="#F5F0E8" stroke-width="0.8"/>
-      <text x="34" y="24" font-family="'Cormorant Garamond', Georgia, serif" font-size="22" font-weight="300" letter-spacing="-1" fill="#F5F0E8">yumlist</text>
-    </svg>
-  </a>
-  <div style="display:flex;align-items:center;gap:24px;">
-    <a href="/negocios" class="nav-cta">Para restaurantes</a>
-    <a href="#waitlist" class="nav-cta" style="opacity:1;">Get early access →</a>
+  <div class="nav-in">
+    <a href="/" style="text-decoration:none">
+      <svg width="104" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="18" r="10" fill="#C4622D"/>
+        <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.1" stroke="#F5F0E8" stroke-width="0.8"/>
+        <text x="34" y="24" font-family="'Cormorant Garamond',Georgia,serif" font-size="22" font-weight="300" letter-spacing="-1" fill="#F5F0E8">yumlist</text>
+      </svg>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="/negocios">Para restaurantes</a>
+      <a class="nav-cta" href="#waitlist">Get early access →</a>
+    </div>
   </div>
 </nav>
 
 <!-- Hero -->
-<section class="hero">
-  <div class="photos" id="photos">
-    <div class="photo">
-      <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&fit=crop" alt="">
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">A new way to discover</div>
+      <h1>Discover places <em>through people</em> you trust</h1>
+      <p class="hero-sub">A private social network for food. No fake reviews. No noise. Just recommendations from people whose taste you trust.</p>
+      <div class="hero-ctas">
+        <a class="btn-main" href="#waitlist">Get early access →</a>
+        <div class="hero-note">Launching in <b>Barcelona</b> first</div>
+      </div>
     </div>
-    <div class="photo">
-      <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&fit=crop" alt="">
-    </div>
-    <div class="photo">
-      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&fit=crop" alt="">
-    </div>
-    <div class="photo">
-      <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&fit=crop" alt="">
-    </div>
-    <div class="photo">
-      <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&fit=crop" alt="">
+
+    <div class="phone-zone">
+      <div class="float float-1">
+        <b>🍽 Comida 9.2</b>
+        <div class="fl-sub">Servicio 8.5 · Precio 7.8</div>
+      </div>
+      <div class="float float-2">
+        <b class="fl-clay">✓ Saved</b> to your list
+        <div class="fl-sub">12 places you want to try</div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="app-header">
+            <div class="app-logo"><i></i>yumlist</div>
+            <div class="app-bell"></div>
+          </div>
+          <div class="feed-card">
+            <div class="feed-user">
+              <div class="feed-avatar"><svg viewBox="0 0 100 100"><use href="#face-maria"/></svg></div>
+              <div>
+                <div class="feed-name">Maria</div>
+                <div class="feed-place">Bar Cañete · El Raval</div>
+              </div>
+            </div>
+            <div class="feed-photo">
+              <svg viewBox="15 0 270 200" preserveAspectRatio="xMidYMid slice"><use href="#dish-gambas"/></svg>
+              <div class="feed-selfie"><svg viewBox="0 0 64 84"><use href="#selfie-maria"/></svg></div>
+            </div>
+            <div class="feed-ratings">
+              <span class="pill">Comida 9.2</span>
+              <span class="pill alt">Servicio 8.5</span>
+              <span class="pill alt">Precio 7.8</span>
+            </div>
+            <div class="feed-caption">Best gambas al ajillo in the city. Ask for the counter seats.</div>
+            <div class="feed-actions">
+              <span class="feed-save">+ Quiero ir</span>
+              <span class="feed-hearts">♥ 24 friends</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="hero-text">
-    <div class="hero-eyebrow">A new way to discover</div>
-    <h1 class="hero-title">
-      Discover places<br><em>through people</em><br>you trust
-    </h1>
-    <p class="hero-sub">
-      A private social network for food. No fake reviews. No noise. Just recommendations from people whose taste you trust.
-    </p>
-    <div class="btns">
-      <a href="#waitlist" class="btn btn-primary">
-        Get early access →
-      </a>
+  <div class="strip" aria-hidden="true">
+    <div class="strip-track">
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-gambas"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-latte"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-brunch"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-pasta"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-vermut"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-croissant"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-gambas"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-latte"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-brunch"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-pasta"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-vermut"/></svg></div>
+      <div class="strip-item"><svg viewBox="0 0 300 200"><use href="#dish-croissant"/></svg></div>
+    </div>
+  </div>
+</header>
+
+<!-- The idea -->
+<section>
+  <div class="wrap idea-grid">
+    <div class="rv">
+      <div class="sec-label">The idea</div>
+      <h2>People you follow. <em>Places you'll love.</em></h2>
+      <p class="sec-sub">Online reviews are broken. Fake ratings, generic opinions, people with completely different tastes than yours.</p>
+      <p class="sec-sub" style="margin-top:16px">Yumlist is built on a different idea: the best recommendation comes from someone you actually know. Follow friends, follow people with your taste. See where they eat.</p>
+    </div>
+    <div class="posts rv">
+      <div class="post">
+        <div class="post-photo">
+          <div class="dish"><svg viewBox="60 10 180 180" preserveAspectRatio="xMidYMid slice"><use href="#dish-gambas"/></svg></div>
+          <div class="post-face"><svg viewBox="0 0 100 100"><use href="#face-maria"/></svg></div>
+        </div>
+        <div class="post-info">
+          <div class="post-name">Maria <span class="post-handle">@mariabcn</span></div>
+          <div class="post-place">Bar Cañete</div>
+          <div class="post-hood">El Raval, Barcelona</div>
+          <div class="post-tags"><span class="ptag">dinner</span><span class="ptag">fancy</span><span class="ptag">date</span></div>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-photo">
+          <div class="dish"><svg viewBox="60 10 180 180" preserveAspectRatio="xMidYMid slice"><use href="#dish-latte"/></svg></div>
+          <div class="post-face"><svg viewBox="0 0 100 100"><use href="#face-luca"/></svg></div>
+        </div>
+        <div class="post-info">
+          <div class="post-name">Luca <span class="post-handle">@lucacoffee</span></div>
+          <div class="post-place">Nomad Coffee Lab</div>
+          <div class="post-hood">Poblenou, Barcelona</div>
+          <div class="post-tags"><span class="ptag">coffee</span><span class="ptag">quick</span></div>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-photo">
+          <div class="dish"><svg viewBox="60 10 180 180" preserveAspectRatio="xMidYMid slice"><use href="#dish-brunch"/></svg></div>
+          <div class="post-face"><svg viewBox="0 0 100 100"><use href="#face-nina"/></svg></div>
+        </div>
+        <div class="post-info">
+          <div class="post-name">Nina <span class="post-handle">@ninaeats</span></div>
+          <div class="post-place">Federal Café</div>
+          <div class="post-hood">Sant Antoni, Barcelona</div>
+          <div class="post-tags"><span class="ptag">brunch</span><span class="ptag">coffee</span></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
-
-<!-- Concept -->
-<section class="concept">
-  <div>
-    <div class="concept-label">The idea</div>
-    <h2 class="concept-title">People you follow.<br>places you'll love.</h2>
-    <p class="concept-body">
-      Online reviews are broken. Fake ratings, generic opinions, people with completely different tastes than yours.<br><br>
-      yumlist is built on a different idea: the best recommendation comes from someone you actually know. Follow friends, follow people with your taste. See where they eat.
-    </p>
-  </div>
-  <div class="concept-visual">
-    <div class="concept-card">
-      <div class="card-user">
-        <div class="card-avatar">
-          <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&fit=crop&crop=face" alt="">
-        </div>
-        <div>
-          <div class="card-name">Maria</div>
-          <div class="card-handle">@mariabcn</div>
-        </div>
-      </div>
-      <div class="card-place">Bar Cañete</div>
-      <div class="card-loc">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        El Raval, Barcelona
-      </div>
-      <div class="card-tags">
-        <span class="tag">dinner</span>
-        <span class="tag">fancy</span>
-        <span class="tag">date</span>
-      </div>
+<!-- How it works -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="rv">
+      <div class="sec-label">How it works</div>
+      <h2>Simple. <em>Intentional.</em></h2>
     </div>
-
-    <div class="concept-card">
-      <div class="card-user">
-        <div class="card-avatar">
-          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&fit=crop&crop=face" alt="">
-        </div>
-        <div>
-          <div class="card-name">Luca</div>
-          <div class="card-handle">@lucacoffee</div>
-        </div>
+    <div class="steps">
+      <div class="step rv">
+        <div class="step-num">01</div>
+        <h3>Follow people, not restaurants</h3>
+        <p>Your feed shows places from people you follow. Chronological. No algorithm, no ads, no noise.</p>
       </div>
-      <div class="card-place">Nomad Coffee Lab</div>
-      <div class="card-loc">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        Poblenou, Barcelona
+      <div class="step rv">
+        <div class="step-num">02</div>
+        <h3>Share in seconds</h3>
+        <p>Photo, place name, a quick take. That's it. No long reviews. If it's worth sharing, it should take less than 20 seconds.</p>
       </div>
-      <div class="card-tags">
-        <span class="tag">coffee</span>
-        <span class="tag">quick</span>
+      <div class="step rv">
+        <div class="step-num">03</div>
+        <h3>Save places you want to try</h3>
+        <p>Bookmark any place in one tap. Come back when you're hungry. Your saved places are always there.</p>
       </div>
-    </div>
-
-    <div class="concept-card">
-      <div class="card-user">
-        <div class="card-avatar">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&fit=crop&crop=face" alt="">
-        </div>
-        <div>
-          <div class="card-name">Nina</div>
-          <div class="card-handle">@ninaeats</div>
-        </div>
-      </div>
-      <div class="card-place">Federal Café</div>
-      <div class="card-loc">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        Sant Antoni, Barcelona
-      </div>
-      <div class="card-tags">
-        <span class="tag">brunch</span>
-        <span class="tag">coffee</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Pillars -->
-<section class="pillars">
-  <div class="pillars-header">
-    <div class="concept-label" style="text-align:center;margin-bottom:16px">How it works</div>
-    <h2 class="pillars-title">Simple.<br>Intentional.</h2>
-  </div>
-  <div class="pillars-grid">
-    <div class="pillar">
-      <div class="pillar-num">01</div>
-      <div class="pillar-title">Follow people,<br>not restaurants</div>
-      <p class="pillar-body">Your feed shows places from people you follow. Chronological. No algorithm, no ads, no noise.</p>
-    </div>
-    <div class="pillar">
-      <div class="pillar-num">02</div>
-      <div class="pillar-title">Share in<br>seconds</div>
-      <p class="pillar-body">Photo, place name, a quick take. That's it. No long reviews. If it's worth sharing, it should take less than 20 seconds.</p>
-    </div>
-    <div class="pillar">
-      <div class="pillar-num">03</div>
-      <div class="pillar-title">Save places<br>you want to try</div>
-      <p class="pillar-body">Bookmark any place in one tap. Come back when you're hungry. Your saved places are always there.</p>
     </div>
   </div>
 </section>
 
 <!-- Waitlist -->
 <section class="waitlist" id="waitlist">
-  <div class="concept-label">Coming soon</div>
-  <h2 class="waitlist-title">Be the first<br>to know</h2>
-  <p class="waitlist-sub">We're launching in Barcelona first. Leave your email and we'll reach out when it's ready.</p>
-
-  <form class="waitlist-form" id="wl-form">
-    <input type="email" class="waitlist-input" placeholder="your@email.com" required id="wl-email">
-    <button type="submit" class="waitlist-btn">Join waitlist</button>
-  </form>
-  <div class="waitlist-success" id="wl-success">You're on the list. We'll be in touch 🍴</div>
+  <div class="wrap rv">
+    <div class="sec-label" style="justify-content:center">Coming soon</div>
+    <h2>Be the first <em>to know</em></h2>
+    <p class="sec-sub">We're launching in Barcelona first. Leave your email and we'll reach out when it's ready.</p>
+    <form class="wl-form" id="wl-form">
+      <input class="wl-input" type="email" id="wl-email" placeholder="you@email.com" required autocomplete="email">
+      <button class="btn-main" type="submit" id="wl-btn">Join waitlist</button>
+    </form>
+    <div class="wl-msg" id="wl-msg"></div>
+    <div class="wl-note">No spam. Just one email when we launch.</div>
+  </div>
 </section>
 
-<!-- Footer -->
 <footer>
-  <div class="footer-logo">
-    <svg width="110" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="10" cy="16" r="9" fill="#C4622D" opacity="0.5"/>
-      <circle cx="17" cy="16" r="9" fill="#F5F0E8" fill-opacity="0.06" stroke="#F5F0E8" stroke-width="0.6" opacity="0.5"/>
-      <text x="31" y="21" font-family="'Cormorant Garamond', Georgia, serif" font-size="20" font-weight="300" letter-spacing="-1" fill="#F5F0E8" opacity="0.35">yumlist</text>
-    </svg>
-  </div>
-  <div class="footer-links">
-    <a href="/negocios" class="footer-link">Para restaurantes</a>
-    <a href="mailto:yumlist@yumlist.app" class="footer-link">Contact</a>
-    <a href="https://instagram.com" class="footer-link">Instagram</a>
-    <a href="/privacy" class="footer-link">Privacy</a>
-    <a href="/terms" class="footer-link">Terms</a>
+  <div class="wrap foot">
+    <div class="foot-logo"><i></i>yumlist</div>
+    <div class="foot-links">
+      <a href="/negocios">Para restaurantes</a>
+      <a href="mailto:yumlist@yumlist.app">Contact</a>
+      <a href="https://instagram.com" target="_blank" rel="noopener">Instagram</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+    </div>
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-  // Custom cursor
-  const cursor = document.getElementById('cursor');
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-  });
-  document.querySelectorAll('a, button, .photo').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('big'));
-    el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
-  });
+  // Scroll reveals
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.rv').forEach(el => io.observe(el));
 
-  // Parallax on photos
-  const photos = document.querySelectorAll('.photo');
-  const baseRotations = [-6, 3, -2, 5, -4];
-  document.addEventListener('mousemove', e => {
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight / 2;
-    const dx = (e.clientX - cx) / cx;
-    const dy = (e.clientY - cy) / cy;
-    photos.forEach((p, i) => {
-      const depth = (i % 3 + 1) * 0.4;
-      const tx = dx * depth * 12;
-      const ty = dy * depth * 8;
-      const r = baseRotations[i] + dx * depth * 2;
-      p.style.transform = `translateX(${tx}px) translateY(${ty}px) rotate(${r}deg)`;
-    });
-  });
+  // Waitlist — Supabase
+  const SUPABASE_URL = 'https://klkksarpfcohfqirxwoe.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE';
 
-  // Stagger photo entrance
-  photos.forEach((p, i) => {
-    p.style.opacity = '0';
-    p.style.transform += ' translateY(30px)';
-    setTimeout(() => {
-      p.style.transition = 'opacity 0.9s ease, transform 0.9s cubic-bezier(0.16,1,0.3,1)';
-      p.style.opacity = '1';
-    }, 100 + i * 80);
-  });
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
   document.getElementById('wl-form').addEventListener('submit', async e => {
     e.preventDefault();
-    const email = document.getElementById('wl-email').value;
-    const btn = e.target.querySelector('button');
+    const email = document.getElementById('wl-email').value.trim();
+    const btn   = document.getElementById('wl-btn');
+    const msg   = document.getElementById('wl-msg');
+    msg.className = 'wl-msg';
+    msg.textContent = '';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.textContent = "That email doesn't look right.";
+      msg.classList.add('err');
+      return;
+    }
+
     btn.textContent = '...';
     btn.disabled = true;
 
-    try {
-      const res = await fetch('https://klkksarpfcohfqirxwoe.supabase.co/rest/v1/waitlist', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE',
-    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE',
-    'Prefer': 'return=minimal'
-  },
-  body: JSON.stringify({ email })
-});
-if (!res.ok) throw new Error('error');
-      document.getElementById('wl-form').style.display = 'none';
-      document.getElementById('wl-success').classList.add('show');
-    } catch(err) {
+    const { error } = await sb.from('waitlist').insert({ email });
+
+    if (error && error.code !== '23505') {
+      msg.textContent = 'Something went wrong. Try again?';
+      msg.classList.add('err');
       btn.textContent = 'Join waitlist';
       btn.disabled = false;
+      return;
     }
+
+    msg.textContent = "You're on the list. We'll be in touch 🍴";
+    msg.classList.add('ok');
+    btn.textContent = 'Joined ✓';
+    document.getElementById('wl-email').value = '';
   });
 </script>
 </body>
