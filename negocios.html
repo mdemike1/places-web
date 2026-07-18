@@ -3,794 +3,600 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0E0D0C">
 <title>Yumlist para Negocios — Tu restaurante, recomendado por quienes importan</title>
 <meta name="description" content="Reclama el perfil de tu restaurante en Yumlist y descubre qué dicen tus clientes sobre ti.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e0d0c' rx='8'/><circle cx='11' cy='16' r='8' fill='%23C4622D'/><circle cx='19' cy='16' r='8' fill='%23F5F0E8' fill-opacity='0.15'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --ink:       #0e0d0c;
-    --cream:     #F5F0E8;
-    --clay:      #C4622D;
-    --clay-dk:   #8C3E18;
-    --clay-lt:   #E8956D;
-    --charcoal:  #1E1D1B;
-    --mid:       #2A2926;
-    --parchment: #EDE8DF;
-    --offwhite:  #FAF8F4;
-    --sand:      #B89F87;
-    --muted:     rgba(245,240,232,0.38);
-    --serif: 'Cormorant Garamond', serif;
-    --sans: 'DM Sans', sans-serif;
+  :root{
+    --ink:#0E0D0C; --ink2:#141210;
+    --cream:#F5F0E8; --clay:#C4622D; --ember:#D9754A; --clay-deep:#A34E1F;
+    --sand:#B89F87; --muted:rgba(245,240,232,.4);
+    --serif:'Cormorant Garamond',serif; --sans:'DM Sans',sans-serif;
+    --line:rgba(245,240,232,.08);
   }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--ink);
-    color: var(--cream);
-    font-family: var(--sans);
-    font-weight: 300;
-    line-height: 1.6;
-    overflow-x: hidden;
-    cursor: none;
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1000px 700px at 90% -5%, rgba(196,98,45,.08), transparent 60%),
+      radial-gradient(800px 600px at -5% 60%, rgba(184,159,135,.05), transparent 55%),
+      var(--ink);
+    color:var(--cream);
+    font-family:var(--sans);
+    font-weight:300;
+    line-height:1.65;
+    overflow-x:hidden;
   }
-
-  /* Custom cursor */
-  .cursor {
-    position: fixed;
-    width: 8px; height: 8px;
-    background: var(--cream);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: width 0.2s, height 0.2s, background 0.2s;
-    mix-blend-mode: difference;
+  ::selection{background:rgba(196,98,45,.4)}
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.03;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .cursor.big { width: 40px; height: 40px; }
+  a{color:inherit}
+  svg{display:block}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+
+  .rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .rv.in{opacity:1;transform:none}
 
   /* Nav */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    padding: 28px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 100;
-    mix-blend-mode: difference;
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:rgba(14,13,12,.75);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
   }
-
-  .logo {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 300;
-    letter-spacing: -0.5px;
-    color: var(--cream);
-    text-decoration: none;
+  .nav-in{max-width:1120px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+  .nav-links{display:flex;align-items:center;gap:22px}
+  .nav-link{font-size:13px;color:rgba(245,240,232,.55);text-decoration:none;transition:color .2s}
+  .nav-link:hover{color:var(--cream)}
+  .nav-cta{
+    font-size:13px;font-weight:500;text-decoration:none;color:#FFF6EE;
+    background:linear-gradient(135deg,var(--ember),var(--clay) 60%,var(--clay-deep));
+    padding:9px 18px;border-radius:100px;
+    box-shadow:0 5px 16px -6px rgba(196,98,45,.55);
+    transition:transform .2s,filter .2s;
   }
-
-  .nav-cta {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--cream);
-    text-decoration: none;
-    letter-spacing: 0.04em;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-  }
-  .nav-cta:hover { opacity: 1; }
+  .nav-cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
 
   /* Hero */
-  .hero {
-    min-height: 100vh;
-    background: var(--ink);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 160px 40px 100px;
-    position: relative;
-    overflow: hidden;
+  .hero{padding:150px 0 100px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  .eyebrow{
+    display:flex;align-items:center;gap:9px;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(217,117,74,.8);margin-bottom:22px;
   }
+  .eyebrow::before{
+    content:'';width:16px;height:9px;flex-shrink:0;
+    background:
+      radial-gradient(circle 4.5px at 4.5px 4.5px, var(--clay) 98%, transparent),
+      radial-gradient(circle 4.5px at 11.5px 4.5px, rgba(245,240,232,.3) 98%, transparent);
+  }
+  h1{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(38px,4.8vw,62px);
+    line-height:1.06;letter-spacing:-1.2px;
+    margin-bottom:24px;
+  }
+  h1 em{font-style:italic;color:var(--ember)}
+  .hero-sub{font-size:17px;color:rgba(245,240,232,.55);max-width:460px;margin-bottom:34px;line-height:1.7}
+  .hero-ctas{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .btn-main{
+    font-size:15px;font-weight:500;text-decoration:none;color:#FFF6EE;
+    background:linear-gradient(135deg,var(--ember),var(--clay) 60%,var(--clay-deep));
+    padding:15px 30px;border-radius:100px;border:none;cursor:pointer;font-family:var(--sans);
+    box-shadow:0 8px 24px -8px rgba(196,98,45,.6), inset 0 1px 0 rgba(255,255,255,.15);
+    transition:transform .2s,filter .2s;
+    display:inline-block;
+  }
+  .btn-main:hover{transform:translateY(-2px);filter:brightness(1.07)}
+  .btn-line{
+    font-size:14px;text-decoration:none;color:rgba(245,240,232,.65);
+    padding:14px 24px;border-radius:100px;border:1px solid rgba(245,240,232,.16);
+    transition:border-color .2s,color .2s,background .2s;
+  }
+  .btn-line:hover{border-color:rgba(196,98,45,.4);color:var(--cream);background:rgba(196,98,45,.08)}
 
-  .hero-logo {
-    margin-bottom: 56px;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.1s cubic-bezier(0.16,1,0.3,1) forwards;
+  /* Dashboard mockup */
+  .dash-zone{position:relative}
+  .dash{
+    background:#161311;
+    border:1px solid rgba(245,240,232,.12);
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 50px 110px -30px rgba(0,0,0,.8), 0 20px 50px -20px rgba(196,98,45,.14);
+    transform:rotate(1.2deg);
+    transition:transform .6s cubic-bezier(.2,.7,.2,1);
   }
+  .dash:hover{transform:rotate(0deg) translateY(-5px)}
+  .dash-bar{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line);background:#191614}
+  .dash-dot{width:9px;height:9px;border-radius:50%;background:rgba(245,240,232,.14)}
+  .dash-dot:first-child{background:rgba(196,98,45,.55)}
+  .dash-url{margin-left:10px;font-size:10px;color:rgba(245,240,232,.35);letter-spacing:.03em}
+  .dash-body{display:flex}
+  .dash-side{width:118px;border-right:1px solid var(--line);padding:14px 10px;flex-shrink:0;background:#141210}
+  .ds-logo{display:flex;align-items:center;gap:5px;font-family:var(--serif);font-size:13px;margin:0 0 14px 4px}
+  .ds-logo i{display:block;width:15px;height:9px;
+    background:
+      radial-gradient(circle 4.5px at 4.5px 4.5px, var(--clay) 98%, transparent),
+      radial-gradient(circle 4.5px at 10.5px 4.5px, rgba(245,240,232,.2) 98%, transparent);
+  }
+  .ds-item{font-size:9.5px;color:rgba(245,240,232,.4);padding:6px 8px;border-radius:7px;margin-bottom:2px}
+  .ds-item.on{background:linear-gradient(90deg,rgba(196,98,45,.16),rgba(196,98,45,.04));color:var(--cream);position:relative}
+  .ds-item.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:11px;border-radius:2px;background:var(--ember)}
+  .dash-main{flex:1;padding:16px;min-width:0}
+  .dm-title{font-family:var(--serif);font-size:16px;margin-bottom:12px;letter-spacing:-.3px}
+  .dm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .dm-stat{background:linear-gradient(160deg,rgba(245,240,232,.05),rgba(245,240,232,.015));border:1px solid var(--line);border-radius:10px;padding:10px}
+  .dm-stat b{display:block;font-family:var(--serif);font-size:20px;font-weight:300;line-height:1.1}
+  .dm-stat span{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,232,.4)}
+  .dm-stat em{display:block;font-style:normal;font-size:8.5px;color:rgba(120,215,155,.85);margin-top:2px}
+  .dm-review{background:linear-gradient(160deg,rgba(245,240,232,.045),rgba(245,240,232,.012));border:1px solid var(--line);border-radius:12px;padding:11px}
+  .dm-ru{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+  .dm-av{width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0}
+  .dm-av svg{width:100%;height:100%}
+  .dm-name{font-size:10px;font-weight:500}
+  .dm-date{font-size:8.5px;color:rgba(245,240,232,.35)}
+  .dm-pills{display:flex;gap:4px;margin-bottom:7px;flex-wrap:wrap}
+  .dm-pill{font-size:8px;font-weight:500;padding:2.5px 7px;border-radius:100px;background:rgba(196,98,45,.14);border:1px solid rgba(196,98,45,.25);color:var(--ember)}
+  .dm-pill.alt{background:rgba(245,240,232,.06);border-color:rgba(245,240,232,.12);color:rgba(245,240,232,.55)}
+  .dm-text{font-size:9.5px;color:rgba(245,240,232,.6);line-height:1.5;margin-bottom:8px}
+  .dm-btn{display:inline-block;font-size:8.5px;font-weight:500;color:var(--ink);background:var(--cream);padding:4px 11px;border-radius:100px}
 
-  .hero-eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 24px;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
+  .float{
+    position:absolute;z-index:5;
+    background:rgba(25,22,20,.94);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(245,240,232,.14);
+    border-radius:14px;
+    padding:10px 14px;
+    box-shadow:0 16px 40px -12px rgba(0,0,0,.6);
+    font-size:12px;
+    animation:bob 5s ease-in-out infinite;
   }
+  .float b{font-weight:500}
+  .float .fl-sub{font-size:10px;color:rgba(245,240,232,.45);margin-top:2px}
+  .float .fl-clay{color:var(--ember)}
+  .float-1{top:-22px;right:2%;animation-delay:.6s}
+  .float-2{bottom:-18px;left:-3%}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 
-  .hero-title {
-    font-family: var(--serif);
-    font-size: clamp(40px, 6vw, 80px);
-    font-weight: 300;
-    line-height: 1.0;
-    letter-spacing: -1.5px;
-    max-width: 820px;
-    margin: 0 auto 28px;
-    opacity: 0;
-    transform: translateY(20px);
-    animation: up 1s 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+  /* Sections */
+  section{padding:110px 0}
+  .sec-label{
+    display:flex;align-items:center;gap:9px;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(217,117,74,.8);margin-bottom:18px;
   }
+  .sec-label::before{
+    content:'';width:16px;height:9px;flex-shrink:0;
+    background:
+      radial-gradient(circle 4.5px at 4.5px 4.5px, var(--clay) 98%, transparent),
+      radial-gradient(circle 4.5px at 11.5px 4.5px, rgba(245,240,232,.3) 98%, transparent);
+  }
+  h2{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(30px,4vw,48px);
+    line-height:1.08;letter-spacing:-1px;
+    margin-bottom:22px;
+  }
+  h2 em{font-style:italic;color:var(--ember)}
+  .sec-sub{font-size:16px;color:rgba(245,240,232,.55);max-width:520px;line-height:1.75}
 
-  .hero-sub {
-    font-size: 15px;
-    font-weight: 300;
-    color: var(--muted);
-    max-width: 420px;
-    margin: 0 auto 52px;
-    line-height: 1.7;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+  /* Beneficios */
+  .bens{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:54px}
+  .ben{
+    background:linear-gradient(165deg,rgba(245,240,232,.045),rgba(245,240,232,.012));
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:32px 28px;
+    transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;
   }
+  .ben:hover{transform:translateY(-5px);border-color:rgba(196,98,45,.28);box-shadow:0 20px 50px -20px rgba(0,0,0,.6)}
+  .ben-icon{width:46px;height:46px;margin-bottom:20px}
+  .ben h3{font-family:var(--serif);font-size:23px;font-weight:400;letter-spacing:-.3px;line-height:1.2;margin-bottom:12px}
+  .ben p{font-size:14px;color:rgba(245,240,232,.55);line-height:1.7}
 
-  .btns {
-    display: flex;
-    gap: 14px;
-    justify-content: center;
-    flex-wrap: wrap;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: up 0.8s 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+  /* Planes */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:54px;align-items:stretch}
+  .plan{
+    position:relative;
+    border:1px solid rgba(245,240,232,.1);
+    border-radius:20px;
+    padding:34px 28px;
+    background:linear-gradient(165deg,rgba(245,240,232,.04),rgba(245,240,232,.012));
+    display:flex;flex-direction:column;
+    transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;
   }
+  .plan:hover{transform:translateY(-5px);border-color:rgba(245,240,232,.2);box-shadow:0 20px 50px -20px rgba(0,0,0,.6)}
+  .plan.pro{
+    border-color:rgba(196,98,45,.45);
+    background:
+      linear-gradient(170deg,rgba(196,98,45,.1),rgba(196,98,45,.02) 45%),
+      linear-gradient(165deg,rgba(245,240,232,.04),rgba(245,240,232,.012));
+    box-shadow:0 18px 44px -18px rgba(196,98,45,.35);
+  }
+  .plan.pro:hover{border-color:rgba(196,98,45,.65)}
+  .plan-badge{
+    position:absolute;top:-11px;left:28px;
+    font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    padding:4.5px 12px;border-radius:100px;
+    background:linear-gradient(135deg,var(--ember),var(--clay));color:#FFF6EE;
+    box-shadow:0 4px 12px -4px rgba(196,98,45,.5);
+  }
+  .plan-name{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .plan-price{font-family:var(--serif);font-size:clamp(38px,4vw,50px);font-weight:300;letter-spacing:-1px;line-height:1}
+  .plan-note{font-size:12px;color:rgba(245,240,232,.32);margin:4px 0 24px}
+  .plan-div{height:1px;background:linear-gradient(90deg,var(--line),rgba(196,98,45,.15),var(--line));margin-bottom:20px}
+  .plan ul{list-style:none;display:flex;flex-direction:column;gap:11px;flex:1;margin-bottom:0}
+  .plan li{font-size:13px;color:rgba(245,240,232,.58);display:flex;gap:9px;line-height:1.55}
+  .plan li::before{content:'–';color:rgba(196,98,45,.55);flex-shrink:0}
+  .plan li.hl{color:rgba(245,240,232,.85)}
+  .plan li.hl::before{content:'+';color:var(--ember)}
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 28px;
-    border-radius: 100px;
-    text-decoration: none;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    transition: all 0.25s ease;
-    border: 1px solid rgba(245,240,232,0.2);
-    color: var(--cream);
-    background: rgba(245,240,232,0.06);
-    backdrop-filter: blur(10px);
-    cursor: none;
+  /* Promesa */
+  .promise{padding:130px 0;text-align:center;position:relative}
+  .promise::before{
+    content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:600px;height:600px;border-radius:50%;
+    background:radial-gradient(circle,rgba(196,98,45,.09),transparent 65%);
+    filter:blur(24px);pointer-events:none;
   }
-  .btn:hover {
-    background: var(--cream);
-    color: var(--ink);
-    border-color: var(--cream);
-    transform: translateY(-2px);
+  .promise .wrap{position:relative;max-width:820px}
+  .promise-mark{
+    font-family:var(--serif);font-size:110px;line-height:.6;
+    color:rgba(196,98,45,.5);margin-bottom:8px;
   }
-
-  .btn-primary {
-    background: var(--cream);
-    color: var(--ink);
-    border-color: var(--cream);
+  .promise blockquote{
+    font-family:var(--serif);font-weight:300;font-style:italic;
+    font-size:clamp(24px,3.4vw,38px);
+    line-height:1.35;letter-spacing:-.5px;
+    margin-bottom:26px;
   }
-  .btn-primary:hover {
-    background: rgba(245,240,232,0.88);
-    transform: translateY(-2px);
-  }
-
-  /* Divider */
-  .divider {
-    width: 1px;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, rgba(245,240,232,0.2), transparent);
-    margin: 0 auto;
-  }
-
-  /* Value proposition */
-  .value {
-    background: var(--charcoal);
-    padding: 100px 40px;
-  }
-
-  .value-inner {
-    max-width: 1000px;
-    margin: 0 auto;
-  }
-
-  .section-label {
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .section-title {
-    font-family: var(--serif);
-    font-size: clamp(32px, 4vw, 52px);
-    font-weight: 300;
-    line-height: 1.1;
-    letter-spacing: -1px;
-    margin-bottom: 64px;
-  }
-
-  .value-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    border: 1px solid rgba(245,240,232,0.08);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .value-block {
-    padding: 40px 32px;
-    border-right: 1px solid rgba(245,240,232,0.08);
-    position: relative;
-  }
-  .value-block:last-child { border-right: none; }
-
-  .value-icon {
-    width: 36px;
-    height: 36px;
-    margin-bottom: 20px;
-    opacity: 0.6;
-  }
-
-  .value-block-title {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 400;
-    margin-bottom: 14px;
-    line-height: 1.2;
-  }
-
-  .value-block-body {
-    font-size: 13px;
-    font-weight: 300;
-    color: rgba(245,240,232,0.45);
-    line-height: 1.75;
-  }
-
-  /* Plans */
-  .plans {
-    background: var(--ink);
-    padding: 100px 40px;
-  }
-
-  .plans-inner {
-    max-width: 1000px;
-    margin: 0 auto;
-  }
-
-  .plans-header {
-    text-align: center;
-    margin-bottom: 64px;
-  }
-
-  .plans-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    align-items: start;
-  }
-
-  .plan-card {
-    border: 1px solid rgba(245,240,232,0.1);
-    border-radius: 20px;
-    padding: 36px 28px;
-    position: relative;
-    background: rgba(245,240,232,0.03);
-    transition: border-color 0.2s;
-  }
-
-  .plan-card.featured {
-    border-color: rgba(245,240,232,0.25);
-    background: rgba(245,240,232,0.05);
-    transform: translateY(-8px);
-  }
-
-  .plan-badge {
-    display: inline-block;
-    font-family: var(--sans);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: var(--cream);
-    color: var(--ink);
-    margin-bottom: 24px;
-  }
-
-  .plan-name {
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-
-  .plan-price {
-    font-family: var(--serif);
-    font-size: clamp(40px, 4vw, 56px);
-    font-weight: 300;
-    letter-spacing: -1px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-
-  .plan-price-note {
-    font-size: 12px;
-    color: rgba(245,240,232,0.35);
-    margin-bottom: 28px;
-  }
-
-  .plan-divider {
-    width: 100%;
-    height: 1px;
-    background: rgba(245,240,232,0.08);
-    margin-bottom: 24px;
-  }
-
-  .plan-features {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .plan-feature {
-    font-size: 13px;
-    font-weight: 300;
-    color: rgba(245,240,232,0.6);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    line-height: 1.5;
-  }
-
-  .plan-feature::before {
-    content: '—';
-    color: rgba(245,240,232,0.2);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .plan-feature.highlight {
-    color: rgba(245,240,232,0.85);
-  }
-
-  /* Golden rule */
-  .golden-rule {
-    background: var(--charcoal);
-    padding: 120px 40px;
-    text-align: center;
-  }
-
-  .golden-rule-inner {
-    max-width: 680px;
-    margin: 0 auto;
-  }
-
-  .golden-rule-label {
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 36px;
-  }
-
-  .golden-rule-text {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(22px, 3vw, 32px);
-    font-weight: 300;
-    line-height: 1.55;
-    letter-spacing: -0.3px;
-    color: rgba(245,240,232,0.8);
-  }
+  .promise blockquote b{font-weight:400;font-style:italic;color:var(--ember)}
+  .promise-who{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(245,240,232,.4)}
 
   /* Waitlist */
-  .waitlist {
-    background: var(--ink);
-    padding: 120px 40px 100px;
-    text-align: center;
+  .waitlist{padding:110px 0 130px;text-align:center;position:relative}
+  .waitlist h2{margin-bottom:16px}
+  .waitlist .sec-sub{margin:0 auto 40px}
+  .wl-form{display:flex;gap:10px;max-width:440px;margin:0 auto}
+  .wl-input{
+    flex:1;padding:15px 20px;
+    background:rgba(245,240,232,.05);
+    border:1px solid rgba(245,240,232,.15);
+    border-radius:100px;
+    color:var(--cream);font-family:var(--sans);font-size:14px;font-weight:300;
+    outline:none;transition:border-color .2s,box-shadow .2s;
+    min-width:0;
   }
+  .wl-input::placeholder{color:rgba(245,240,232,.28)}
+  .wl-input:focus{border-color:rgba(196,98,45,.6);box-shadow:0 0 0 3px rgba(196,98,45,.16)}
+  .wl-msg{margin-top:18px;font-size:14px;min-height:22px}
+  .wl-msg.ok{color:rgb(120,215,155)}
+  .wl-msg.err{color:var(--ember)}
+  .wl-note{margin-top:8px;font-size:12px;color:rgba(245,240,232,.35)}
 
-  .waitlist-inner {
-    max-width: 520px;
-    margin: 0 auto;
+  footer{border-top:1px solid var(--line);padding:44px 0}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .foot-logo{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:20px;letter-spacing:-.5px}
+  .foot-logo i{display:block;width:24px;height:14px;
+    background:
+      radial-gradient(circle 7px at 7px 7px, var(--clay) 98%, transparent),
+      radial-gradient(circle 7px at 17px 7px, rgba(245,240,232,.18) 98%, transparent);
   }
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap}
+  .foot-links a{font-size:13px;color:rgba(245,240,232,.45);text-decoration:none;transition:color .2s}
+  .foot-links a:hover{color:var(--cream)}
 
-  .waitlist-title {
-    font-family: var(--serif);
-    font-size: clamp(36px, 5vw, 60px);
-    font-weight: 300;
-    line-height: 1.05;
-    letter-spacing: -1.5px;
-    margin-bottom: 16px;
+  @media(max-width:920px){
+    .hero{padding:120px 0 70px}
+    .hero-grid{grid-template-columns:1fr;gap:64px}
+    .bens,.plans{grid-template-columns:1fr;max-width:460px}
+    .plans{gap:26px}
+    .plan.pro{order:-1}
+    .float-1{right:0}
+    .float-2{left:0}
+    section{padding:80px 0}
   }
-
-  .waitlist-sub {
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 44px;
-    line-height: 1.7;
+  @media(max-width:560px){
+    .wl-form{flex-direction:column}
+    .btn-main{width:100%;text-align:center}
+    .nav-links .nav-link{display:none}
+    .dash-side{display:none}
+    h1{font-size:36px}
   }
-
-  .waitlist-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 420px;
-    margin: 0 auto;
-  }
-
-  .waitlist-input {
-    width: 100%;
-    padding: 14px 20px;
-    background: rgba(245,240,232,0.06);
-    border: 1px solid rgba(245,240,232,0.15);
-    border-radius: 100px;
-    color: var(--cream);
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 300;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .waitlist-input::placeholder { color: rgba(245,240,232,0.3); }
-  .waitlist-input:focus { border-color: rgba(245,240,232,0.4); }
-
-  .waitlist-btn {
-    padding: 14px 24px;
-    background: var(--cream);
-    color: var(--ink);
-    border: none;
-    border-radius: 100px;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: none;
-    transition: opacity 0.2s, transform 0.2s;
-    margin-top: 4px;
-  }
-  .waitlist-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-  .waitlist-btn:disabled { opacity: 0.5; }
-
-  .waitlist-message {
-    display: none;
-    font-size: 14px;
-    color: rgba(245,240,232,0.55);
-    margin-top: 20px;
-    line-height: 1.6;
-  }
-  .waitlist-message.show { display: block; }
-
-  /* Footer */
-  footer {
-    padding: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid rgba(245,240,232,0.07);
-  }
-
-  .footer-logo {
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 300;
-    color: rgba(245,240,232,0.35);
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 28px;
-  }
-
-  .footer-link {
-    font-size: 12px;
-    color: rgba(245,240,232,0.25);
-    text-decoration: none;
-    letter-spacing: 0.04em;
-    transition: color 0.2s;
-  }
-  .footer-link:hover { color: rgba(245,240,232,0.7); }
-
-  /* Animations */
-  @keyframes up {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Grain overlay */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.028;
-    pointer-events: none;
-    z-index: 1000;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    nav { padding: 20px 24px; }
-
-    .hero { padding: 120px 24px 80px; }
-
-    .value { padding: 60px 24px; }
-    .value-grid { grid-template-columns: 1fr; }
-    .value-block { border-right: none; border-bottom: 1px solid rgba(245,240,232,0.08); }
-    .value-block:last-child { border-bottom: none; }
-
-    .plans { padding: 60px 24px; }
-    .plans-grid { grid-template-columns: 1fr; }
-    .plan-card.featured { transform: none; }
-
-    .golden-rule { padding: 80px 24px; }
-
-    .waitlist { padding: 80px 24px 60px; }
-
-    footer { flex-direction: column; gap: 20px; padding: 28px 24px; }
-    .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+    .rv{opacity:1;transform:none}
+    html{scroll-behavior:auto}
   }
 </style>
 </head>
 <body>
 
-<div class="cursor" id="cursor"></div>
+<!-- Avatar illustrations (inline SVG, no external deps) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="face-maria" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#B85538"/>
+      <circle cx="76" cy="20" r="22" fill="#C4622D" opacity=".55"/>
+      <path d="M50 30 q-20 0 -22 24 l-2 46 h48 l-2 -46 q-2 -24 -22 -24 Z" fill="#4A3226"/>
+      <circle cx="50" cy="46" r="17" fill="#E8B48E"/>
+      <path d="M33 44 q0 -18 17 -18 q17 0 17 18 q-6 -10 -17 -10 q-11 0 -17 10 Z" fill="#4A3226"/>
+      <path d="M22 100 q4 -26 28 -26 q24 0 28 26 Z" fill="#8F4526"/>
+    </symbol>
+    <symbol id="face-luca" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#4A5A48"/>
+      <circle cx="22" cy="78" r="24" fill="#5F7043" opacity=".5"/>
+      <circle cx="50" cy="46" r="17" fill="#D9A176"/>
+      <path d="M34 42 q2 -16 16 -16 q14 0 16 16 q-4 -8 -16 -8 q-12 0 -16 8 Z" fill="#2E2620"/>
+      <path d="M38 54 q4 8 12 8 q8 0 12 -8 l0 6 q-4 7 -12 7 q-8 0 -12 -7 Z" fill="#2E2620"/>
+      <path d="M22 100 q4 -26 28 -26 q24 0 28 26 Z" fill="#33402F"/>
+    </symbol>
+  </defs>
+</svg>
 
-<!-- Nav -->
 <nav>
-  <a href="/negocios.html" class="logo" aria-label="yumlist negocios">
-    <svg width="120" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="11" cy="18" r="10" fill="#C4622D"/>
-      <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.1" stroke="#F5F0E8" stroke-width="0.8"/>
-      <text x="34" y="24" font-family="'Cormorant Garamond', Georgia, serif" font-size="22" font-weight="300" letter-spacing="-1" fill="#F5F0E8">yumlist</text>
-    </svg>
-  </a>
-  <a href="index.html" class="nav-cta">Para usuarios →</a>
+  <div class="nav-in">
+    <a href="/" style="text-decoration:none">
+      <svg width="104" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="18" r="10" fill="#C4622D"/>
+        <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.1" stroke="#F5F0E8" stroke-width="0.8"/>
+        <text x="34" y="24" font-family="'Cormorant Garamond',Georgia,serif" font-size="22" font-weight="300" letter-spacing="-1" fill="#F5F0E8">yumlist</text>
+      </svg>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="/">Para usuarios</a>
+      <a class="nav-cta" href="#waitlist">Reclama tu perfil →</a>
+    </div>
+  </div>
 </nav>
 
 <!-- Hero -->
-<section class="hero" id="top">
-  <div class="hero-logo">
-    <svg width="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="24" r="17" fill="#C4622D"/>
-      <circle cx="30" cy="24" r="17" fill="#F5F0E8" fill-opacity="0.07" stroke="#F5F0E8" stroke-width="1"/>
-    </svg>
-  </div>
-  <div class="hero-eyebrow">Yumlist para Negocios</div>
-  <h1 class="hero-title">Tu restaurante, recomendado por quienes importan.</h1>
-  <p class="hero-sub">Tus clientes ya te están recomendando a sus amigos en Yumlist. Reclama tu perfil y descubre qué dicen.</p>
-  <div class="btns">
-    <a href="#waitlist" class="btn btn-primary">Únete a la lista de espera →</a>
-    <a href="index.html" class="btn">Para usuarios →</a>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- Value proposition -->
-<section class="value">
-  <div class="value-inner">
-    <div class="section-label">Por qué Yumlist</div>
-    <h2 class="section-title">Lo que cambia<br>cuando estás dentro.</h2>
-    <div class="value-grid">
-      <div class="value-block">
-        <svg class="value-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="14" r="6" stroke="#F5F0E8" stroke-width="1.2"/>
-          <circle cx="24" cy="14" r="6" stroke="#F5F0E8" stroke-width="1.2"/>
-          <path d="M6 30c0-4.418 2.686-8 6-8M18 22c3.314 0 6 3.582 6 8M24 22c3.314 0 6 3.582 6 8" stroke="#F5F0E8" stroke-width="1.2" stroke-linecap="round"/>
-        </svg>
-        <div class="value-block-title">Boca a boca visible</div>
-        <p class="value-block-body">Cada post en Yumlist es una recomendación personal que llega a toda la red del cliente. No es una reseña anónima — es un amigo diciéndole a otro amigo dónde comer.</p>
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Yumlist para Negocios</div>
+      <h1>Tu restaurante, recomendado <em>por quienes importan.</em></h1>
+      <p class="hero-sub">Tus clientes ya te están recomendando a sus amigos en Yumlist. Reclama tu perfil y descubre qué dicen.</p>
+      <div class="hero-ctas">
+        <a class="btn-main" href="#waitlist">Únete a la lista de espera →</a>
+        <a class="btn-line" href="/">Para usuarios →</a>
       </div>
-      <div class="value-block">
-        <svg class="value-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 4L22 14H32L24 20L27 30L18 24L9 30L12 20L4 14H14L18 4Z" stroke="#F5F0E8" stroke-width="1.2" stroke-linejoin="round"/>
-        </svg>
-        <div class="value-block-title">Clientes que ya vienen convencidos</div>
-        <p class="value-block-body">Quien llega porque un amigo lo recomendó ya viene con predisposición positiva. Gasta más, repite más, y a su vez recomienda más. El efecto se multiplica.</p>
+    </div>
+
+    <div class="dash-zone">
+      <div class="float float-1">
+        <b class="fl-clay">+3 "Quiero ir"</b> esta semana
+        <div class="fl-sub">31 personas quieren visitarte</div>
       </div>
-      <div class="value-block">
-        <svg class="value-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="20" width="6" height="10" rx="1" stroke="#F5F0E8" stroke-width="1.2"/>
-          <rect x="15" y="14" width="6" height="16" rx="1" stroke="#F5F0E8" stroke-width="1.2"/>
-          <rect x="24" y="8" width="6" height="22" rx="1" stroke="#F5F0E8" stroke-width="1.2"/>
+      <div class="float float-2">
+        <b>Nueva mención</b> de @mariabcn
+        <div class="fl-sub">Comida 9.2 · hace 12 min</div>
+      </div>
+
+      <!-- Mockup del panel -->
+      <div class="dash">
+        <div class="dash-bar">
+          <span class="dash-dot"></span><span class="dash-dot"></span><span class="dash-dot"></span>
+          <span class="dash-url">yumlist.app/business/dashboard</span>
+        </div>
+        <div class="dash-body">
+          <div class="dash-side">
+            <div class="ds-logo"><i></i>yumlist</div>
+            <div class="ds-item on">Dashboard</div>
+            <div class="ds-item">Mi perfil</div>
+            <div class="ds-item">Reviews</div>
+            <div class="ds-item">Analytics</div>
+            <div class="ds-item">Planes</div>
+          </div>
+          <div class="dash-main">
+            <div class="dm-title">Bar Cañete</div>
+            <div class="dm-stats">
+              <div class="dm-stat"><span>Menciones</span><b>47</b><em>+8 este mes</em></div>
+              <div class="dm-stat"><span>Nota media</span><b>8.7</b><em>Comida 9.1</em></div>
+              <div class="dm-stat"><span>Quiero ir</span><b>31</b><em>+3 esta semana</em></div>
+            </div>
+            <div class="dm-review">
+              <div class="dm-ru">
+                <div class="dm-av"><svg viewBox="0 0 100 100"><use href="#face-maria"/></svg></div>
+                <div>
+                  <div class="dm-name">Maria <span class="dm-date">· hace 12 min</span></div>
+                </div>
+              </div>
+              <div class="dm-pills">
+                <span class="dm-pill">Comida 9.2</span>
+                <span class="dm-pill alt">Servicio 8.5</span>
+                <span class="dm-pill alt">Precio 7.8</span>
+              </div>
+              <div class="dm-text">Las mejores gambas al ajillo de la ciudad. Pedid sitio en la barra.</div>
+              <span class="dm-btn">Responder</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Por qué Yumlist -->
+<section style="padding-top:40px">
+  <div class="wrap">
+    <div class="rv">
+      <div class="sec-label">Por qué Yumlist</div>
+      <h2>Lo que cambia <em>cuando estás dentro.</em></h2>
+    </div>
+    <div class="bens">
+      <div class="ben rv">
+        <svg class="ben-icon" viewBox="0 0 46 46" fill="none">
+          <path d="M6 14 q0 -6 6 -6 h12 q6 0 6 6 v6 q0 6 -6 6 h-8 l-6 6 v-6 q-4 0 -4 -6 Z" fill="rgba(196,98,45,.16)" stroke="#C4622D" stroke-width="1.8"/>
+          <path d="M22 26 h6 q6 0 6 6 v2 q0 6 -6 6 q0 0 -2 4 l-4 -4 h-2" fill="none" stroke="#D9754A" stroke-width="1.8" stroke-linejoin="round"/>
+          <circle cx="14" cy="17" r="1.6" fill="#D9754A"/><circle cx="20" cy="17" r="1.6" fill="#D9754A"/>
         </svg>
-        <div class="value-block-title">Datos reales</div>
-        <p class="value-block-body">Menciones totales, nota media desglosada, platos más fotografiados, cuántos usuarios te tienen en su lista "Quiero ir". Información que no encontrarás en ningún otro sitio.</p>
+        <h3>Boca a boca visible</h3>
+        <p>Cada post en Yumlist es una recomendación personal que llega a toda la red del cliente. No es una reseña anónima — es un amigo diciéndole a otro amigo dónde comer.</p>
+      </div>
+      <div class="ben rv">
+        <svg class="ben-icon" viewBox="0 0 46 46" fill="none">
+          <path d="M23 38 q-14 -9 -14 -19 q0 -8 8 -8 q4 0 6 4 q2 -4 6 -4 q8 0 8 8 q0 10 -14 19 Z" fill="rgba(196,98,45,.16)" stroke="#C4622D" stroke-width="1.8"/>
+          <path d="M18 20 l3 3 l7 -7" stroke="#D9754A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <h3>Clientes que ya vienen convencidos</h3>
+        <p>Quien llega porque un amigo lo recomendó ya viene con predisposición positiva. Gasta más, repite más, y a su vez recomienda más. El efecto se multiplica.</p>
+      </div>
+      <div class="ben rv">
+        <svg class="ben-icon" viewBox="0 0 46 46" fill="none">
+          <rect x="8" y="24" width="7" height="14" rx="2" fill="rgba(196,98,45,.16)" stroke="#C4622D" stroke-width="1.8"/>
+          <rect x="19.5" y="15" width="7" height="23" rx="2" fill="rgba(196,98,45,.28)" stroke="#C4622D" stroke-width="1.8"/>
+          <rect x="31" y="8" width="7" height="30" rx="2" fill="rgba(217,117,74,.4)" stroke="#D9754A" stroke-width="1.8"/>
+        </svg>
+        <h3>Datos reales</h3>
+        <p>Menciones totales, nota media desglosada, platos más fotografiados, cuántos usuarios te tienen en su lista "Quiero ir". Información que no encontrarás en ningún otro sitio.</p>
       </div>
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
-
-<!-- Plans -->
-<section class="plans">
-  <div class="plans-inner">
-    <div class="plans-header">
-      <div class="section-label" style="text-align:center;margin-bottom:16px">Planes</div>
-      <h2 class="section-title" style="text-align:center;letter-spacing:-1.5px">Empieza gratis.<br>Crece cuando quieras.</h2>
+<!-- Planes -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="rv">
+      <div class="sec-label">Planes</div>
+      <h2>Empieza gratis. <em>Crece cuando quieras.</em></h2>
     </div>
-    <div class="plans-grid">
-
-      <!-- Gratis -->
-      <div class="plan-card">
+    <div class="plans">
+      <div class="plan rv">
         <div class="plan-name">Gratis</div>
         <div class="plan-price">0€</div>
-        <div class="plan-price-note">para siempre</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li class="plan-feature">Perfil básico del restaurante</li>
-          <li class="plan-feature">Aparecer en el mapa de Yumlist</li>
-          <li class="plan-feature">Nota media agregada</li>
-          <li class="plan-feature">Email mensual resumen</li>
+        <div class="plan-note">para siempre</div>
+        <div class="plan-div"></div>
+        <ul>
+          <li>Perfil básico del restaurante</li>
+          <li>Aparecer en el mapa de Yumlist</li>
+          <li>Nota media agregada</li>
+          <li>Email mensual resumen</li>
         </ul>
       </div>
-
-      <!-- Pro -->
-      <div class="plan-card featured">
+      <div class="plan pro rv">
         <div class="plan-badge">Más popular</div>
         <div class="plan-name">Pro</div>
         <div class="plan-price">9,99€</div>
-        <div class="plan-price-note">+ IVA / mes</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li class="plan-feature highlight">Todo lo del plan Gratis, más:</li>
-          <li class="plan-feature">Insignia de perfil verificado</li>
-          <li class="plan-feature">Ver todos los posts sobre ti</li>
-          <li class="plan-feature">Responder a reviews públicamente</li>
-          <li class="plan-feature">Dashboard de analytics</li>
-          <li class="plan-feature">Alertas en tiempo real</li>
+        <div class="plan-note">+ IVA / mes</div>
+        <div class="plan-div"></div>
+        <ul>
+          <li class="hl">Todo lo del plan Gratis, más:</li>
+          <li>Insignia de perfil verificado</li>
+          <li>Ver todos los posts sobre ti</li>
+          <li>Responder a reviews públicamente</li>
+          <li>Dashboard de analytics</li>
+          <li>Alertas en tiempo real</li>
         </ul>
       </div>
-
-      <!-- Premium -->
-      <div class="plan-card">
+      <div class="plan rv">
         <div class="plan-name">Premium</div>
         <div class="plan-price">24,99€</div>
-        <div class="plan-price-note">+ IVA / mes</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li class="plan-feature highlight">Todo lo del plan Pro, más:</li>
-          <li class="plan-feature">Analytics avanzados y tendencias</li>
-          <li class="plan-feature">Identificación de embajadores</li>
-          <li class="plan-feature">Ofertas exclusivas para usuarios Yumlist</li>
-          <li class="plan-feature">Destacado en Discover</li>
-          <li class="plan-feature">Publicar eventos en tu perfil</li>
+        <div class="plan-note">+ IVA / mes</div>
+        <div class="plan-div"></div>
+        <ul>
+          <li class="hl">Todo lo del plan Pro, más:</li>
+          <li>Analytics avanzados y tendencias</li>
+          <li>Identificación de embajadores</li>
+          <li>Ofertas exclusivas para usuarios Yumlist</li>
+          <li>Destacado en Discover</li>
+          <li>Publicar eventos en tu perfil</li>
         </ul>
       </div>
-
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
-
-<!-- Golden rule -->
-<section class="golden-rule">
-  <div class="golden-rule-inner">
-    <div class="golden-rule-label">Nuestra promesa</div>
-    <p class="golden-rule-text">
-      "El feed de nuestros usuarios es sagrado. Ningún restaurante puede pagar para aparecer en él. Las recomendaciones son siempre orgánicas — eso es exactamente lo que las hace valiosas."
-    </p>
+<!-- Promesa -->
+<section class="promise">
+  <div class="wrap rv">
+    <div class="promise-mark">"</div>
+    <blockquote>El feed de nuestros usuarios es sagrado. Ningún restaurante puede pagar para aparecer en él. Las recomendaciones son siempre orgánicas — <b>eso es exactamente lo que las hace valiosas.</b></blockquote>
+    <div class="promise-who">Nuestra promesa</div>
   </div>
 </section>
-
-<div class="divider"></div>
 
 <!-- Waitlist -->
-<section class="waitlist" id="waitlist">
-  <div class="waitlist-inner">
-    <div class="section-label">Próximamente</div>
-    <h2 class="waitlist-title">Únete a la<br>lista de espera</h2>
-    <p class="waitlist-sub">Sé de los primeros restaurantes en reclamar tu perfil cuando lancemos.</p>
-
-    <form class="waitlist-form" id="biz-form">
-      <input type="email" class="waitlist-input" placeholder="Email del restaurante" required id="biz-email" autocomplete="email">
-      <input type="text" class="waitlist-input" placeholder="Nombre del restaurante" required id="biz-nombre" autocomplete="organization">
-      <input type="text" class="waitlist-input" placeholder="Ciudad" required id="biz-ciudad" autocomplete="address-level2">
-      <button type="submit" class="waitlist-btn" id="biz-btn">Apuntarme</button>
+<section class="waitlist" id="waitlist" style="padding-top:0">
+  <div class="wrap rv">
+    <div class="sec-label" style="justify-content:center">Próximamente</div>
+    <h2>Únete a la <em>lista de espera</em></h2>
+    <p class="sec-sub">Sé de los primeros restaurantes en reclamar tu perfil cuando lancemos.</p>
+    <form class="wl-form" id="wl-form">
+      <input class="wl-input" type="email" id="wl-email" placeholder="restaurante@email.com" required autocomplete="email">
+      <button class="btn-main" type="submit" id="wl-btn">Apuntarme</button>
     </form>
-    <div class="waitlist-message" id="biz-msg"></div>
+    <div class="wl-msg" id="wl-msg"></div>
+    <div class="wl-note">Sin spam. Te avisamos cuando abramos el panel.</div>
   </div>
 </section>
 
-<!-- Footer -->
 <footer>
-  <div class="footer-logo">
-    <svg width="110" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="10" cy="16" r="9" fill="#C4622D" opacity="0.5"/>
-      <circle cx="17" cy="16" r="9" fill="#F5F0E8" fill-opacity="0.06" stroke="#F5F0E8" stroke-width="0.6" opacity="0.5"/>
-      <text x="31" y="21" font-family="'Cormorant Garamond', Georgia, serif" font-size="20" font-weight="300" letter-spacing="-1" fill="#F5F0E8" opacity="0.35">yumlist</text>
-    </svg>
-  </div>
-  <div class="footer-links">
-    <a href="index.html" class="footer-link">Para usuarios</a>
-    <a href="mailto:yumlist@yumlist.app" class="footer-link">Contacto</a>
-    <a href="https://instagram.com" class="footer-link">Instagram</a>
-    <a href="/privacy" class="footer-link">Privacidad</a>
-    <a href="/terms" class="footer-link">Términos</a>
+  <div class="wrap foot">
+    <div class="foot-logo"><i></i>yumlist</div>
+    <div class="foot-links">
+      <a href="/">Para usuarios</a>
+      <a href="mailto:yumlist@yumlist.app">Contacto</a>
+      <a href="https://instagram.com" target="_blank" rel="noopener">Instagram</a>
+      <a href="/privacy">Privacidad</a>
+      <a href="/terms">Términos</a>
+    </div>
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-  // Custom cursor
-  const cursor = document.getElementById('cursor');
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-  });
-  document.querySelectorAll('a, button, input').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('big'));
-    el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
-  });
+  // Scroll reveals
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.rv').forEach(el => io.observe(el));
 
-  // Business waitlist form
+  // Waitlist — Supabase
   const SUPABASE_URL = 'https://klkksarpfcohfqirxwoe.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  document.getElementById('biz-form').addEventListener('submit', async e => {
+  document.getElementById('wl-form').addEventListener('submit', async e => {
     e.preventDefault();
+    const email = document.getElementById('wl-email').value.trim();
+    const btn   = document.getElementById('wl-btn');
+    const msg   = document.getElementById('wl-msg');
+    msg.className = 'wl-msg';
+    msg.textContent = '';
 
-    const email  = document.getElementById('biz-email').value.trim();
-    const nombre = document.getElementById('biz-nombre').value.trim();
-    const ciudad = document.getElementById('biz-ciudad').value.trim();
-    const btn    = document.getElementById('biz-btn');
-    const msg    = document.getElementById('biz-msg');
-
-    // Basic validation
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRe.test(email) || !nombre || !ciudad) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.textContent = 'Ese email no parece válido.';
+      msg.classList.add('err');
+      return;
+    }
 
     btn.textContent = '...';
     btn.disabled = true;
 
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/business_waitlist`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ email, nombre, ciudad })
-      });
+    const { error } = await sb.from('waitlist').insert({ email });
 
-      if (res.status === 201 || res.status === 200) {
-        document.getElementById('biz-form').style.display = 'none';
-        msg.textContent = '¡Perfecto! Te avisaremos cuando lancemos.';
-        msg.classList.add('show');
-      } else if (res.status === 409) {
-        document.getElementById('biz-form').style.display = 'none';
-        msg.textContent = 'Ya estás en la lista.';
-        msg.classList.add('show');
-      } else {
-        throw new Error('error');
-      }
-    } catch (err) {
+    if (error && error.code !== '23505') {
+      msg.textContent = '¿Lo intentas de nuevo?';
+      msg.classList.add('err');
       btn.textContent = 'Apuntarme';
       btn.disabled = false;
+      return;
     }
+
+    msg.textContent = 'Estás en la lista. Te avisaremos pronto 🍴';
+    msg.classList.add('ok');
+    btn.textContent = 'Apuntado ✓';
+    document.getElementById('wl-email').value = '';
   });
 </script>
 </body>
