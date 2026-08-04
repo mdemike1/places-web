@@ -117,6 +117,14 @@ module.exports = async function handler(req, res) {
   }
 
   const body = req.body || {};
+
+  // Honeypot: a bot calling this endpoint directly (skipping the form and its
+  // own honeypot check) is caught here too. Same generic response either way,
+  // so there's no observable difference between "caught" and "email skipped".
+  if (typeof body.hp === 'string' && body.hp.trim() !== '') {
+    return res.status(200).json({ ok: true, sent: false });
+  }
+
   const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
 
   if (!rawEmail || rawEmail.length > 254 || !EMAIL_RE.test(rawEmail)) {

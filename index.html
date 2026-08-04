@@ -270,6 +270,7 @@
   .waitlist h2{margin-bottom:16px}
   .waitlist .sec-sub{margin:0 auto 40px}
   .wl-form{display:flex;gap:10px;max-width:440px;margin:0 auto}
+  .wl-hp{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden}
   .wl-input{
     flex:1;padding:15px 20px;
     background:rgba(245,240,232,.05);
@@ -677,6 +678,9 @@
     <h2>Be the first <em>to know</em></h2>
     <p class="sec-sub">We're launching in Barcelona first. Leave your email and we'll reach out when it's ready.</p>
     <form class="wl-form" id="wl-form">
+      <div class="wl-hp" aria-hidden="true">
+        <input type="text" id="wl-hp" name="website" placeholder="Your website" tabindex="-1" autocomplete="off">
+      </div>
       <input class="wl-input" type="email" id="wl-email" placeholder="you@email.com" required autocomplete="email">
       <button class="btn-main" type="submit" id="wl-btn">Join waitlist</button>
     </form>
@@ -714,11 +718,22 @@
 
   document.getElementById('wl-form').addEventListener('submit', async e => {
     e.preventDefault();
-    const email = document.getElementById('wl-email').value.trim();
-    const btn   = document.getElementById('wl-btn');
-    const msg   = document.getElementById('wl-msg');
+    const email    = document.getElementById('wl-email').value.trim();
+    const honeypot = document.getElementById('wl-hp').value;
+    const btn      = document.getElementById('wl-btn');
+    const msg      = document.getElementById('wl-msg');
     msg.className = 'wl-msg';
     msg.textContent = '';
+
+    // Honeypot: real users never see or fill this field. Bots that do get the
+    // same success screen a human would — no hint they were caught, no insert.
+    if (honeypot) {
+      msg.textContent = "You're on the list. We'll be in touch 🍴";
+      msg.classList.add('ok');
+      btn.textContent = 'Joined ✓';
+      document.getElementById('wl-email').value = '';
+      return;
+    }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       msg.textContent = "That email doesn't look right.";
@@ -749,7 +764,7 @@
       fetch('/api/waitlist-welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, type: 'user' })
+        body: JSON.stringify({ email, type: 'user', hp: honeypot })
       }).catch(() => {});
     }
   });
