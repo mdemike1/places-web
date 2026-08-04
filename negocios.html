@@ -597,6 +597,15 @@
     msg.classList.add('ok');
     btn.textContent = 'Apuntado ✓';
     document.getElementById('wl-email').value = '';
+
+    // Best-effort welcome email — only for genuinely new signups, never blocks the UX
+    if (!error) {
+      fetch('/api/waitlist-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, type: 'business' })
+      }).catch(() => {});
+    }
   });
 </script>
 </body>
