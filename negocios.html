@@ -265,7 +265,8 @@
   .waitlist{padding:110px 0 130px;text-align:center;position:relative}
   .waitlist h2{margin-bottom:16px}
   .waitlist .sec-sub{margin:0 auto 40px}
-  .wl-form{display:flex;gap:10px;max-width:440px;margin:0 auto}
+  .wl-form{display:flex;flex-direction:column;gap:10px;max-width:440px;margin:0 auto}
+  .wl-form .btn-main{width:100%;text-align:center;margin-top:2px}
   .wl-hp{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden}
   .wl-input{
     flex:1;padding:15px 20px;
@@ -306,7 +307,6 @@
     section{padding:80px 0}
   }
   @media(max-width:560px){
-    .wl-form{flex-direction:column}
     .btn-main{width:100%;text-align:center}
     .nav-links .nav-link{display:none}
     .dash-side{display:none}
@@ -536,6 +536,7 @@
       <div class="wl-hp" aria-hidden="true">
         <input type="text" id="wl-hp" name="company" placeholder="Nombre de tu empresa" tabindex="-1" autocomplete="off">
       </div>
+      <input class="wl-input" type="text" id="wl-restaurant" placeholder="Nombre del restaurante" required autocomplete="organization">
       <input class="wl-input" type="email" id="wl-email" placeholder="restaurante@email.com" required autocomplete="email">
       <button class="btn-main" type="submit" id="wl-btn">Apuntarme</button>
     </form>
@@ -572,6 +573,7 @@
 
   document.getElementById('wl-form').addEventListener('submit', async e => {
     e.preventDefault();
+    const restaurantName = document.getElementById('wl-restaurant').value.trim();
     const email    = document.getElementById('wl-email').value.trim();
     const honeypot = document.getElementById('wl-hp').value;
     const btn      = document.getElementById('wl-btn');
@@ -585,7 +587,14 @@
       msg.textContent = 'Estás en la lista. Te avisaremos pronto 🍴';
       msg.classList.add('ok');
       btn.textContent = 'Apuntado ✓';
+      document.getElementById('wl-restaurant').value = '';
       document.getElementById('wl-email').value = '';
+      return;
+    }
+
+    if (!restaurantName) {
+      msg.textContent = 'Nos falta el nombre del restaurante.';
+      msg.classList.add('err');
       return;
     }
 
@@ -598,7 +607,7 @@
     btn.textContent = '...';
     btn.disabled = true;
 
-    const { error } = await sb.from('waitlist').insert({ email });
+    const { error } = await sb.from('business_waitlist').insert({ email, restaurant_name: restaurantName });
 
     if (error && error.code !== '23505') {
       msg.textContent = '¿Lo intentas de nuevo?';
@@ -611,6 +620,7 @@
     msg.textContent = 'Estás en la lista. Te avisaremos pronto 🍴';
     msg.classList.add('ok');
     btn.textContent = 'Apuntado ✓';
+    document.getElementById('wl-restaurant').value = '';
     document.getElementById('wl-email').value = '';
 
     // Best-effort welcome email — only for genuinely new signups, never blocks the UX

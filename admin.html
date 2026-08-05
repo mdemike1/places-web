@@ -204,6 +204,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
     <section class="section" id="usuarios">
       <div class="section-title">Usuarios</div>
       <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Waitlist</div><div class="stat-value" id="u-waitlist">—</div><div class="stat-delta" id="u-waitlist-d"></div></div>
         <div class="stat-card"><div class="stat-label">Total registrados</div><div class="stat-value" id="u-total">—</div><div class="stat-delta" id="u-total-d"></div></div>
         <div class="stat-card"><div class="stat-label">Nuevos (período)</div><div class="stat-value" id="u-new">—</div><div class="stat-delta" id="u-new-d"></div></div>
         <div class="stat-card"><div class="stat-label">DAU (hoy)</div><div class="stat-value" id="u-dau">—</div><div class="stat-delta" id="u-dau-d"></div></div>
@@ -734,7 +735,9 @@ async function loadUsuarios() {
     return r;
   };
 
-  const [totRes, ptotRes, newRes, pnewRes, dauRes, pdauRes, wauRes, pwauRes, mauRes, pmauRes, hoursRes, dauChartRes] = await Promise.allSettled([
+  const [wlRes, pwlRes, totRes, ptotRes, newRes, pnewRes, dauRes, pdauRes, wauRes, pwauRes, mauRes, pmauRes, hoursRes, dauChartRes] = await Promise.allSettled([
+    sb.from('waitlist').select('*',{count:'exact',head:true}),
+    sb.from('waitlist').select('*',{count:'exact',head:true}).lte('created_at', F.prevTo),
     uFilter(sb.from('profiles').select('*',{count:'exact',head:true})),
     uFilter(sb.from('profiles').select('*',{count:'exact',head:true}).lte('created_at', F.prevTo)),
     uFilter(sb.from('profiles').select('*',{count:'exact',head:true}).gte('created_at', F.from).lte('created_at', F.to)),
@@ -749,6 +752,8 @@ async function loadUsuarios() {
     (() => { let q = sb.from('user_events').select('user_id, created_at').eq('event_type','session_open').gte('created_at',F.from).lte('created_at',F.to); if(F.userIds) q=q.in('user_id',F.userIds); return q; })(),
   ]);
 
+  const waitlist  = wlRes.status==='fulfilled' ? wlRes.value.count : null;
+  const pWaitlist = pwlRes.status==='fulfilled' ? pwlRes.value.count : null;
   const total  = totRes.status==='fulfilled' ? totRes.value.count : null;
   const pTotal = ptotRes.status==='fulfilled' ? ptotRes.value.count : null;
   const newU   = newRes.status==='fulfilled' ? newRes.value.count : null;
@@ -758,6 +763,7 @@ async function loadUsuarios() {
   const dau=uset(dauRes), pdau=uset(pdauRes), wau=uset(wauRes), pwau=uset(pwauRes), mau=uset(mauRes), pmau=uset(pmauRes);
   const inactive = (total!==null&&mau!==null) ? total-mau : null;
 
+  set('u-waitlist', fmt(waitlist)); set('u-waitlist-d', delta(waitlist, pWaitlist));
   set('u-total', fmt(total));    set('u-total-d', delta(total, pTotal));
   set('u-new', fmt(newU));       set('u-new-d', delta(newU, pNewU));
   set('u-dau', fmt(dau));        set('u-dau-d', delta(dau, pdau));
