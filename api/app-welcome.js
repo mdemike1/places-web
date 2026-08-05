@@ -15,15 +15,15 @@ function welcomeEmail() {
   const heading = 'Ya estás dentro';
   const bodyHtml = `
     <p style="margin:0 0 16px;">yumlist es lo que comen tus amigos de verdad — sin algoritmos, sin reseñas patrocinadas.</p>
-    <p style="margin:0;color:#F5F0E8;">Pero el feed solo cobra vida cuando tus amigos están dentro. Invítalos y empieza a ver dónde comen de verdad.</p>
+    <p style="margin:0;color:#F5F0E8;">Pero el feed solo cobra vida cuando tus amigos están dentro. Ábrela y empieza a invitarlos.</p>
   `;
-  const text = `Ya estás dentro\n\nyumlist es lo que comen tus amigos de verdad — sin algoritmos, sin reseñas patrocinadas.\n\nPero el feed solo cobra vida cuando tus amigos están dentro. Invítalos y empieza a ver dónde comen de verdad.\n\n— El equipo de yumlist`;
+  const text = `Ya estás dentro\n\nyumlist es lo que comen tus amigos de verdad — sin algoritmos, sin reseñas patrocinadas.\n\nPero el feed solo cobra vida cuando tus amigos están dentro. Ábrela y empieza a invitarlos.\n\n— El equipo de yumlist`;
   const html = renderEmailHtml({
-    preheader: 'Invita a tus amigos y dale vida a tu feed.',
+    preheader: 'Ábrela y empieza a invitar a tus amigos.',
     heading,
     bodyHtml,
-    ctaLabel: 'Invitar amigos',
-    ctaUrl: 'yumlist://invite',
+    ctaLabel: 'Abrir yumlist',
+    ctaUrl: 'yumlistapp://',
     footerNote: 'Recibes este email porque creaste una cuenta en yumlist.',
   });
   return { subject, html, text };
