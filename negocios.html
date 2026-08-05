@@ -538,6 +538,8 @@
       </div>
       <input class="wl-input" type="text" id="wl-restaurant" placeholder="Nombre del restaurante" required autocomplete="organization">
       <input class="wl-input" type="email" id="wl-email" placeholder="restaurante@email.com" required autocomplete="email">
+      <input class="wl-input" type="text" id="wl-contact" placeholder="Nombre de contacto (opcional)" autocomplete="name">
+      <input class="wl-input" type="tel" id="wl-phone" placeholder="Teléfono (opcional)" autocomplete="tel">
       <button class="btn-main" type="submit" id="wl-btn">Apuntarme</button>
     </form>
     <div class="wl-msg" id="wl-msg"></div>
@@ -575,6 +577,8 @@
     e.preventDefault();
     const restaurantName = document.getElementById('wl-restaurant').value.trim();
     const email    = document.getElementById('wl-email').value.trim();
+    const contactName = document.getElementById('wl-contact').value.trim();
+    const phone    = document.getElementById('wl-phone').value.trim();
     const honeypot = document.getElementById('wl-hp').value;
     const btn      = document.getElementById('wl-btn');
     const msg      = document.getElementById('wl-msg');
@@ -589,6 +593,8 @@
       btn.textContent = 'Apuntado ✓';
       document.getElementById('wl-restaurant').value = '';
       document.getElementById('wl-email').value = '';
+      document.getElementById('wl-contact').value = '';
+      document.getElementById('wl-phone').value = '';
       return;
     }
 
@@ -607,7 +613,11 @@
     btn.textContent = '...';
     btn.disabled = true;
 
-    const { error } = await sb.from('business_waitlist').insert({ email, restaurant_name: restaurantName });
+    const payload = { email, restaurant_name: restaurantName };
+    if (contactName) payload.contact_name = contactName;
+    if (phone) payload.phone = phone;
+
+    const { error } = await sb.from('business_waitlist').insert(payload);
 
     if (error && error.code !== '23505') {
       msg.textContent = '¿Lo intentas de nuevo?';
@@ -622,6 +632,8 @@
     btn.textContent = 'Apuntado ✓';
     document.getElementById('wl-restaurant').value = '';
     document.getElementById('wl-email').value = '';
+    document.getElementById('wl-contact').value = '';
+    document.getElementById('wl-phone').value = '';
 
     // Best-effort welcome email — only for genuinely new signups, never blocks the UX
     if (!error) {
