@@ -5,8 +5,9 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FROM = 'yumlist <hola@yumlist.app>';
 
-const BRAND_FONT = "Georgia,'Times New Roman',serif";
+const BRAND_FONT = "'Cormorant Garamond',Georgia,serif";
 const BODY_FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+const LOGO_URL = 'https://yumlist.app/assets/email/yumlist-logo-email.png';
 
 function baseTemplate({ preheader, heading, bodyHtml, ctaLabel, ctaUrl }) {
   return `<!doctype html>
@@ -27,11 +28,12 @@ function baseTemplate({ preheader, heading, bodyHtml, ctaLabel, ctaUrl }) {
 <td align="center" style="padding-bottom:28px;">
 <table role="presentation" cellpadding="0" cellspacing="0">
 <tr>
-<td width="20" height="20" style="background:#C4622D;border-radius:50%;font-size:0;line-height:0;">&nbsp;</td>
-<td width="6" style="font-size:0;line-height:0;">&nbsp;</td>
-<td width="20" height="20" style="background:rgba(245,240,232,0.12);border-radius:50%;font-size:0;line-height:0;">&nbsp;</td>
-<td width="10" style="font-size:0;line-height:0;">&nbsp;</td>
-<td style="font-family:${BRAND_FONT};font-size:20px;color:#F5F0E8;letter-spacing:-0.5px;">yumlist</td>
+<td valign="middle" style="padding-right:10px;">
+<img src="${LOGO_URL}" width="44" height="32" alt="yumlist" style="display:block;border:0;">
+</td>
+<td valign="middle">
+<span style="font-family:${BRAND_FONT};font-size:30px;font-weight:300;letter-spacing:-1px;color:#F5F0E8;">yumlist</span>
+</td>
 </tr>
 </table>
 </td>
