@@ -2,7 +2,7 @@
 // Best-effort: the user is already saved in Supabase before this runs, so any
 // failure here is logged and swallowed rather than surfaced to the client.
 
-const { EMAIL_RE, renderEmailHtml, sendViaResend } = require('./_lib/email');
+const { EMAIL_RE, renderEmailHtml, sendViaResend, escapeHtml } = require('./_lib/email');
 
 function userEmail() {
   const subject = 'Ya estás dentro 🍴 bienvenido a yumlist';
@@ -25,16 +25,17 @@ function userEmail() {
   return { subject, html, text };
 }
 
-function businessEmail() {
-  const subject = 'Tu restaurante ya está en la lista de espera 🍽️';
-  const heading = 'Tu sitio, reservado';
+function businessEmail(restaurantName) {
+  const subject = 'Tu restaurante ya está en la lista de espera de yumlist';
+  const heading = 'Ya estás en la lista';
+  const greetingHtml = restaurantName ? `Hola, ${escapeHtml(restaurantName)}` : 'Hola';
+  const greetingText = restaurantName ? `Hola, ${restaurantName}` : 'Hola';
   const bodyHtml = `
-    <p style="margin:0 0 16px;">Hola,</p>
-    <p style="margin:0 0 16px;">Gracias por apuntar tu restaurante a yumlist. Te hemos guardado un hueco en la lista de espera — en cuanto abramos el panel de negocios, te escribimos para que reclames tu perfil.</p>
-    <p style="margin:0 0 16px;">yumlist conecta a la gente con recomendaciones reales de sus amigos, no con reseñas compradas ni posicionamiento pagado. Que tu restaurante aparezca ahí es aparecer donde la gente realmente confía.</p>
-    <p style="margin:0;color:#F5F0E8;font-style:italic;">Tus amigos no mienten — y pronto, tampoco tus clientes.</p>
+    <p style="margin:0 0 16px;">${greetingHtml}</p>
+    <p style="margin:0 0 16px;">Gracias por apuntar tu restaurante a yumlist. Cuando abramos el panel de negocios, serás de los primeros en entrar y reclamar tu perfil.</p>
+    <p style="margin:0;color:#F5F0E8;">En yumlist, la gente decide dónde comer por lo que le cuenta un amigo — no un desconocido, no un anuncio. Cuando alguien recomienda tu restaurante, sus amigos lo ven, y van.</p>
   `;
-  const text = `Tu sitio, reservado\n\nHola,\n\nGracias por apuntar tu restaurante a yumlist. Te hemos guardado un hueco en la lista de espera — en cuanto abramos el panel de negocios, te escribimos para que reclames tu perfil.\n\nyumlist conecta a la gente con recomendaciones reales de sus amigos, no con reseñas compradas ni posicionamiento pagado. Que tu restaurante aparezca ahí es aparecer donde la gente realmente confía.\n\nTus amigos no mienten — y pronto, tampoco tus clientes.\n\n— El equipo de yumlist\nyumlist.app/negocios`;
+  const text = `${heading}\n\n${greetingText}\n\nGracias por apuntar tu restaurante a yumlist. Cuando abramos el panel de negocios, serás de los primeros en entrar y reclamar tu perfil.\n\nEn yumlist, la gente decide dónde comer por lo que le cuenta un amigo — no un desconocido, no un anuncio. Cuando alguien recomienda tu restaurante, sus amigos lo ven, y van.\n\n— El equipo de yumlist\nyumlist.app/negocios`;
   const html = renderEmailHtml({
     preheader: 'Tu restaurante ya está en la lista de espera de yumlist.',
     heading,
@@ -69,6 +70,7 @@ module.exports = async function handler(req, res) {
 
   const email = rawEmail.toLowerCase();
   const audience = body.type === 'business' ? 'business' : 'user';
+  const restaurantName = typeof body.restaurant_name === 'string' ? body.restaurant_name.trim().slice(0, 200) : '';
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -76,7 +78,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, sent: false });
   }
 
-  const { subject, html, text } = audience === 'business' ? businessEmail() : userEmail();
+  const { subject, html, text } = audience === 'business' ? businessEmail(restaurantName) : userEmail();
 
   try {
     await sendViaResend({ apiKey, to: email, subject, html, text });

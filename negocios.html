@@ -628,7 +628,7 @@
       fetch('/api/waitlist-welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, type: 'business', hp: honeypot })
+        body: JSON.stringify({ email, type: 'business', hp: honeypot, restaurant_name: restaurantName })
       }).catch(() => {});
     }
   });

@@ -75,6 +75,17 @@ ${ctaUrl ? `<tr>
 </html>`;
 }
 
+// Same escaping approach already used in admin.html's esc() — ported here
+// since this runs in Node, not the browser, so that one can't be imported.
+function escapeHtml(value) {
+  if (!value) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // Sends via Resend's REST API. Throws on failure — callers decide how to
 // handle that (the app's own transactional sends swallow it; a future bulk
 // sender might retry or report it).
@@ -103,4 +114,4 @@ async function sendViaResend({ apiKey, to, subject, html, text, headers }) {
   return resendRes.json();
 }
 
-module.exports = { EMAIL_RE, FROM, LOGO_URL, renderEmailHtml, sendViaResend };
+module.exports = { EMAIL_RE, FROM, LOGO_URL, renderEmailHtml, sendViaResend, escapeHtml };
