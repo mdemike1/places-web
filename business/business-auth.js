@@ -173,22 +173,6 @@ function buildSidebar(account, activePage) {
   </aside>`;
 }
 
-// ── Email notifications ───────────────────────────────────────────────────────
-
-async function sendEmailNotification(to, subject, body) {
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-business-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? SUPABASE_KEY}` },
-      body: JSON.stringify({ to, subject, body })
-    });
-    if (!res.ok) throw new Error('non-ok');
-  } catch {
-    // Edge function not yet deployed — continue, do not break flow
-  }
-}
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function esc(s) {

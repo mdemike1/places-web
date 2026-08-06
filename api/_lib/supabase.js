@@ -21,4 +21,26 @@ async function getVerifiedUser(accessToken) {
   return res.json();
 }
 
-module.exports = { getVerifiedUser };
+// Checks admin_users membership for a verified user, using that user's own
+// access token — the exact same REST call business-auth.js's requireAdmin()
+// already makes from the browser, just replicated server-side. Relies on
+// admin_users' existing RLS (self-check), not a new trust mechanism.
+async function isAdmin(userId, accessToken) {
+  if (!userId || !accessToken) return false;
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/admin_users?select=user_id&user_id=eq.${encodeURIComponent(userId)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+    }
+  );
+
+  if (!res.ok) return false;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+module.exports = { getVerifiedUser, isAdmin, SUPABASE_URL, SUPABASE_ANON_KEY };

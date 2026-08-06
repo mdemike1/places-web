@@ -276,6 +276,30 @@ async function getDocUrl(path, docId) {
   el.textContent = '(enlace válido 1h)';
 }
 
+// Best-effort: nunca bloquea el flujo de aprobar/rechazar. El endpoint
+// verifica por su cuenta que quien llama es admin y deriva el destinatario
+// de business_accounts — aquí solo se manda account_id/decision/admin_note.
+async function notifyVerificationDecision(accountId, decision, adminNote) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    await fetch('/api/verification-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        account_id: accountId,
+        decision,
+        ...(adminNote ? { admin_note: adminNote } : {}),
+      }),
+    });
+  } catch (e) {
+    console.warn('notifyVerificationDecision error:', e);
+  }
+}
+
 async function approveDoc(docId, accountId) {
   const msg = document.getElementById(`action-msg-${docId}`);
   msg.textContent = 'Aprobando...';
@@ -298,16 +322,7 @@ async function approveDoc(docId, accountId) {
     return;
   }
 
-  const { data: bizData } = await sb.from('business_accounts').select('email').eq('id', accountId).maybeSingle();
-  const email = bizData?.email ?? null;
-
-  if (email) {
-    await sendEmailNotification(
-      email,
-      '✓ Tu cuenta en Yumlist Negocios ha sido verificada',
-      `¡Hola! Tu perfil en Yumlist Negocios ha sido verificado. Ya puedes acceder a todas las funciones de tu plan. Entra en https://yumlist.app/business/dashboard`
-    );
-  }
+  notifyVerificationDecision(accountId, 'approved');
 
   msg.textContent = '✓ Aprobado correctamente';
   msg.style.color = 'rgb(100,210,140)';
@@ -331,20 +346,14 @@ async function rejectDoc(docId, accountId) {
   msg.textContent = 'Rechazando...';
 
   const { error: e1 } = await sb.from('business_accounts').update({ status: 'rejected' }).eq('id', accountId);
-  const { error: e2 } = await sb.from('business_verification_docs').update({ status: 'rejected' }).eq('id', docId);
+  const { error: e2 } = await sb
+    .from('business_verification_docs')
+    .update({ status: 'rejected', admin_note: motivo })
+    .eq('id', docId);
 
   if (e1 || e2) { msg.textContent = 'Error. Revisa la consola.'; console.error(e1, e2); return; }
 
-  const { data: bizData } = await sb.from('business_accounts').select('email').eq('id', accountId).maybeSingle();
-  const email = bizData?.email ?? null;
-
-  if (email) {
-    await sendEmailNotification(
-      email,
-      'Tu solicitud de verificación en Yumlist Negocios',
-      `Hemos revisado tu solicitud y no ha podido ser aprobada por el siguiente motivo:\n\n${motivo}\n\nSi tienes dudas o quieres enviar documentación adicional, responde a este email.`
-    );
-  }
+  notifyVerificationDecision(accountId, 'rejected', motivo);
 
   const actionMsg = document.getElementById(`action-msg-${docId}`);
   actionMsg.textContent = '✗ Rechazado. Email enviado.';
