@@ -68,6 +68,24 @@ async function getBusinessAccount(userId) {
   return data ?? null;
 }
 
+// Guard for every page under /business/* except /business/admin (which uses
+// requireAdmin) and the auth pages themselves (login/registro have their own
+// "already logged in" checks). Redirects away and never returns a value the
+// caller can render with — no session data or nav should reach the page
+// unless there's a confirmed business_accounts row for it.
+async function requireBusinessAccount() {
+  const session = await requireAuth();
+  if (!session) return null; // requireAuth() already redirected to /business/login
+
+  const account = await getBusinessAccount(session.user.id);
+  if (!account) {
+    window.location.replace('/business/registro?motivo=sin-cuenta');
+    return null;
+  }
+
+  return { session, account };
+}
+
 async function doSignOut() {
   await sb.auth.signOut();
   window.location.replace('/business/login');

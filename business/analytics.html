@@ -43,16 +43,10 @@
 <script src="business-auth.js"></script>
 <script>
 async function init() {
-  const session = await requireAuth();
-  if (!session) return;
-
-  const account = await getBusinessAccount(session.user.id);
+  const auth = await requireBusinessAccount();
+  if (!auth) return;
+  const { account } = auth;
   document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/analytics');
-
-  if (!account) {
-    document.getElementById('content').innerHTML = `<div class="alert alert-warning">No encontramos tu cuenta de restaurante. <a href="/business/registro" class="auth-link">Completar registro →</a></div>`;
-    return;
-  }
 
   const plan   = account?.plan ?? 'free';
   const isPro  = plan === 'pro' || plan === 'premium';

@@ -96,10 +96,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="business-auth.js"></script>
 <script>
-  // Redirect if already logged in
-  sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.replace('/business/dashboard');
+  // Redirect if already logged in AND already has a business account —
+  // otherwise stay here, this is exactly where a session-without-account
+  // (e.g. bounced from the panel guard) is supposed to land.
+  sb.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const account = await getBusinessAccount(session.user.id);
+    if (account) window.location.replace('/business/dashboard');
   });
+
+  // Contextual message when arriving here because the panel guard found no
+  // business_accounts row for an otherwise-valid session.
+  if (new URLSearchParams(location.search).get('motivo') === 'sin-cuenta') {
+    document.getElementById('alert-container').innerHTML =
+      '<div class="alert alert-warning">Tu sesión no tiene ningún restaurante registrado todavía. Completa el registro para acceder al panel.</div>';
+  }
 
   // Geocoding on address blur
   async function geocodeAddress() {

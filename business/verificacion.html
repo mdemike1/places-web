@@ -126,12 +126,9 @@
   let businessId = null;
 
   async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      window.location.replace('/business/login');
-      return;
-    }
-    businessId = session.user.id;
+    const auth = await requireBusinessAccount();
+    if (!auth) return;
+    businessId = auth.session.user.id;
 
     // File selection
     const fileInput = document.getElementById('doc-file');
