@@ -72,7 +72,10 @@ async function init() {
   const recentPosts = posts.slice(0, 3);
 
   const recentHtml = recentPosts.length === 0
-    ? `<div class="empty">Aún no hay posts sobre tu restaurante en Yumlist.</div>`
+    ? `<div class="empty">
+         <div style="color:#F5F0E8;font-size:15px;margin-bottom:8px;">Todavía no hay menciones</div>
+         <div style="color:#B89F87;max-width:360px;margin:0 auto;line-height:1.6;">En cuanto alguien publique sobre ti en yumlist, aparecerá aquí. No es un fallo — así empieza cualquier restaurante nuevo.</div>
+       </div>`
     : recentPosts.map(p => {
         const user    = p.profiles ?? {};
         const photos  = Array.isArray(p.photos) ? p.photos : (p.photo_url ? [p.photo_url] : []);

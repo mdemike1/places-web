@@ -87,17 +87,21 @@ async function init() {
   );
 
   // ── Pro metrics ───────────────────────────────────────────────────────────
+  // Calculado solo si el plan lo permite — nada de esto debe llegar al HTML
+  // en una cuenta Free, ni siquiera detrás de un blur.
 
-  const foodRatings    = posts.map(p => p.rating_food    ?? p.nota_comida    ?? p.nota).filter(v => v != null).map(Number);
-  const serviceRatings = posts.map(p => p.rating_service ?? p.nota_servicio).filter(v => v != null).map(Number);
-  const priceRatings   = posts.map(p => p.rating_price   ?? p.nota_precio).filter(v => v != null).map(Number);
+  let foodRatings = [], serviceRatings = [], priceRatings = [], topDishes = [];
+  if (isPro) {
+    foodRatings    = posts.map(p => p.rating_food    ?? p.nota_comida    ?? p.nota).filter(v => v != null).map(Number);
+    serviceRatings = posts.map(p => p.rating_service ?? p.nota_servicio).filter(v => v != null).map(Number);
+    priceRatings   = posts.map(p => p.rating_price   ?? p.nota_precio).filter(v => v != null).map(Number);
 
-  // Dish tags
-  const tagCount = {};
-  posts.forEach(p => {
-    (p.dish_tags ?? p.tags ?? []).forEach(t => { tagCount[t] = (tagCount[t] ?? 0) + 1; });
-  });
-  const topDishes = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const tagCount = {};
+    posts.forEach(p => {
+      (p.dish_tags ?? p.tags ?? []).forEach(t => { tagCount[t] = (tagCount[t] ?? 0) + 1; });
+    });
+    topDishes = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  }
 
   // Saved posts (Quiero ir) — Pro only
   let quieroIr = 0;
@@ -108,10 +112,13 @@ async function init() {
 
   // ── Premium metrics ───────────────────────────────────────────────────────
 
-  // Ambassadors: users who posted more than once
-  const userPostCount = {};
-  posts.forEach(p => { userPostCount[p.user_id] = (userPostCount[p.user_id] ?? 0) + 1; });
-  const ambassadors = Object.entries(userPostCount).filter(([, c]) => c > 1).length;
+  // Ambassadors: users who posted more than once — Premium only
+  let ambassadors = 0;
+  if (isPrem) {
+    const userPostCount = {};
+    posts.forEach(p => { userPostCount[p.user_id] = (userPostCount[p.user_id] ?? 0) + 1; });
+    ambassadors = Object.entries(userPostCount).filter(([, c]) => c > 1).length;
+  }
 
   // Nearby restaurants (500m) — Premium only
   let nearbyAvg = '—';
@@ -165,6 +172,12 @@ async function init() {
       <h1 class="page-title">Métricas de tu restaurante</h1>
     </div>
 
+    ${totalMentions === 0 ? `
+    <div class="alert alert-info" style="margin-bottom:24px;color:#B89F87;">
+      <strong style="color:#F5F0E8;">Todavía no hay actividad que analizar.</strong> En cuanto la gente empiece a publicar sobre tu restaurante en yumlist, estas métricas se irán llenando solas — no hay nada roto, solo estáis empezando.
+    </div>
+    ` : ''}
+
     <!-- FREE: Summary -->
     <div class="analytics-section">
       <div class="analytics-section-header">
@@ -195,20 +208,30 @@ async function init() {
     </div>
 
     <!-- PRO: Nota desglosada -->
-    ${lockedSection('Nota desglosada', 'pro', `
+    ${lockedSection('Nota desglosada', 'pro', isPro ? `
       <div class="metric-row">
         <div class="metric-pill">🍽 Comida: ${avg(foodRatings)}</div>
         <div class="metric-pill">💬 Servicio: ${avg(serviceRatings)}</div>
         <div class="metric-pill">💰 Precio: ${avg(priceRatings)}</div>
       </div>
+    ` : `
+      <div class="metric-row">
+        <div class="metric-pill">🍽 Comida: —</div>
+        <div class="metric-pill">💬 Servicio: —</div>
+        <div class="metric-pill">💰 Precio: —</div>
+      </div>
     `)}
 
     <!-- PRO: Platos más mencionados -->
-    ${lockedSection('Platos más mencionados', 'pro', `
+    ${lockedSection('Platos más mencionados', 'pro', isPro ? `
       <div class="review-tags">
         ${topDishes.length > 0
           ? topDishes.map(([t, c]) => `<span class="tag">${t} <span style="opacity:.5">${c}</span></span>`).join('')
           : '<span style="font-size:13px;color:var(--muted)">Sin datos de platos todavía.</span>'}
+      </div>
+    ` : `
+      <div class="review-tags">
+        <span style="font-size:13px;color:var(--muted)">Disponible con el plan Pro.</span>
       </div>
     `)}
 
@@ -228,11 +251,19 @@ async function init() {
     `)}
 
     <!-- PREMIUM: Embajadores -->
-    ${lockedSection('Embajadores', 'premium', `
+    ${lockedSection('Embajadores', 'premium', isPrem ? `
       <div class="stats-grid" style="margin-bottom:0">
         <div class="stat-card">
           <div class="stat-label">Usuarios que han publicado más de una vez</div>
           <div class="stat-value">${ambassadors}</div>
+          <div class="stat-sub">embajadores de tu restaurante</div>
+        </div>
+      </div>
+    ` : `
+      <div class="stats-grid" style="margin-bottom:0">
+        <div class="stat-card">
+          <div class="stat-label">Usuarios que han publicado más de una vez</div>
+          <div class="stat-value">—</div>
           <div class="stat-sub">embajadores de tu restaurante</div>
         </div>
       </div>
