@@ -165,9 +165,9 @@
       const ext      = file.name.split('.').pop().toLowerCase();
       const path     = `${businessId}/${crypto.randomUUID()}.${ext}`;
 
-      // Upload to Storage
+      // Upload to Storage — private bucket, only the owner and admins can read it
       const { error: storageError } = await sb.storage
-        .from('business-docs')
+        .from('business-verification')
         .upload(path, file, { upsert: false });
 
       if (storageError) {

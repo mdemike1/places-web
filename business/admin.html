@@ -266,7 +266,7 @@ async function loadPending() {
 }
 
 async function getDocUrl(path, docId) {
-  const { data, error } = await sb.storage.from('business-docs').createSignedUrl(path, 3600);
+  const { data, error } = await sb.storage.from('business-verification').createSignedUrl(path, 3600);
   const el = document.getElementById(`doc-url-${docId}`);
   if (error || !data?.signedUrl) {
     el.textContent = 'Error al generar enlace';
