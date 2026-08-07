@@ -343,9 +343,10 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
       <div class="section-title">Negocios B2B</div>
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Waitlist</div><div class="stat-value" id="b-waitlist">—</div><div class="stat-delta" id="b-waitlist-d"></div></div>
-        <div class="stat-card"><div class="stat-label">Registrados</div><div class="stat-value" id="b-registered">—</div></div>
-        <div class="stat-card"><div class="stat-label">Verificados</div><div class="stat-value" id="b-verified">—</div></div>
-        <div class="stat-card"><div class="stat-label">MRR estimado</div><div class="stat-value sm" id="b-mrr">—</div></div>
+        <div class="stat-card"><div class="stat-label">Registrados</div><div class="stat-value" id="b-registered">—</div><div class="stat-delta" id="b-registered-sub"></div></div>
+        <div class="stat-card"><div class="stat-label">Verificados</div><div class="stat-value" id="b-verified">—</div><div class="stat-delta" id="b-verified-sub"></div></div>
+        <div class="stat-card"><div class="stat-label">De pago</div><div class="stat-value" id="b-paying">—</div><div class="stat-delta" id="b-paying-sub"></div></div>
+        <div class="stat-card"><div class="stat-label">MRR estimado</div><div class="stat-value sm" id="b-mrr">—</div><div class="stat-delta" id="b-mrr-sub" style="color:rgba(245,240,232,.35)">Basado en el plan asignado en la base de datos — Stripe no está integrado, no hay cobros reales todavía.</div></div>
       </div>
       <div class="table-wrap" id="b-plans-wrap" style="margin-bottom:24px">
         <div class="plan-row"><span class="skeleton" style="width:200px;height:16px"></span></div>
@@ -354,7 +355,14 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
         <div class="chart-title">Crecimiento waitlist por día</div>
         <canvas id="waitlist-chart" height="80"></canvas>
       </div>
-      <div class="section-subtitle">Restaurantes candidatos a contactar (≥5 menciones sin cuenta)</div>
+
+      <div class="section-subtitle">Zonas con desequilibrio (posts de usuarios vs. restaurantes registrados)</div>
+      <p style="font-size:12px;color:rgba(245,240,232,.4);margin:-4px 0 12px;max-width:640px;line-height:1.6">
+        Agrupa posts por proximidad (~500m) dentro del período seleccionado arriba. El índice es posts ÷ (restaurantes + 1) — cuantos más posts y menos restaurantes registrados haya cerca, más alto. Es un indicador para priorizar dónde mirar, no una predicción.
+      </p>
+      <div class="tbl-container" id="tbl-zones"></div>
+
+      <div class="section-subtitle">Restaurantes candidatos a contactar (≥5 menciones agrupadas por proximidad, sin negocio registrado a menos de 50m)</div>
       <div class="tbl-container" id="tbl-candidates"></div>
       <div id="contacted-section" style="display:none">
         <div class="section-subtitle">Ya contactados</div>
@@ -384,7 +392,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 const SUPABASE_URL = 'https://klkksarpfcohfqirxwoe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE';
 const ADMIN_EMAIL  = 'admin@yumlist.app';
-const PLAN_PRICES  = { free: 0, starter: 29, premium: 79 };
+const PLAN_PRICES  = { free: 0, pro: 9.99, premium: 24.99 };
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -402,6 +410,12 @@ function fmtDec(n, d = 1) { if (n === null || n === undefined || isNaN(n)) retur
 function fmtPct(n) { if (n === null || n === undefined || isNaN(n)) return '—'; return fmtDec(n, 1) + '%'; }
 function set(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
 function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// trim + minúsculas + espacios colapsados — para agrupar variantes triviales
+// del mismo nombre de restaurante sin fragmentar el conteo de menciones.
+function normalizeRestaurantName(raw) {
+  return (raw || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 function delta(curr, prev, suffix = '') {
   if (curr === null || prev === null || prev === 0 || isNaN(curr) || isNaN(prev)) return '';
@@ -1080,35 +1094,48 @@ async function loadSocial() {
 
 // ── B2B ───────────────────────────────────────────────────────────────────────
 async function loadB2B() {
-  const [wlRes, pwlRes, bizRes, postsAllRes, bizNamesRes, wlChartRes, outreachRes] = await Promise.allSettled([
+  // postsAllRes (candidatos) es histórico, sin filtro de período — es el
+  // acumulado de menciones orgánicas lo que importa como argumento de venta.
+  // zonePostsRes (zonas) sí respeta el período seleccionado arriba, igual que
+  // el resto del dashboard. Ambos limitados a 2000 filas, el mismo tope que
+  // ya usa loadMapa() para esta misma función de clustering O(n²) — más
+  // volumen que eso habría que moverlo a una función de Postgres.
+  const [wlRes, pwlRes, bizRes, postsAllRes, wlChartRes, outreachRes, zonePostsRes] = await Promise.allSettled([
     sb.from('business_waitlist').select('*',{count:'exact',head:true}),
     sb.from('business_waitlist').select('*',{count:'exact',head:true}).lte('created_at',F.prevTo),
-    sb.from('business_accounts').select('id, status, plan, restaurant_name'),
-    sb.from('posts').select('restaurant').limit(5000),
-    sb.from('business_accounts').select('restaurant_name'),
+    sb.from('business_accounts').select('id, status, plan, restaurant_name, lat, lng'),
+    sb.from('posts').select('restaurant, lat, lng').not('lat','is',null).not('lng','is',null).not('restaurant','is',null).order('created_at',{ascending:false}).limit(2000),
     sb.from('business_waitlist').select('created_at').gte('created_at',F.from).lte('created_at',F.to).order('created_at',{ascending:true}),
     sb.from('business_outreach').select('restaurant_name, contacted_at').order('contacted_at',{ascending:false}),
+    sb.from('posts').select('lat,lng').not('lat','is',null).not('lng','is',null).gte('created_at',F.from).lte('created_at',F.to).order('created_at',{ascending:false}).limit(2000),
   ]);
 
   const waitlist = wlRes.status==='fulfilled' ? wlRes.value.count : null;
   const pWaitlist= pwlRes.status==='fulfilled' ? pwlRes.value.count : null;
 
-  let registered=null, verified=null, mrr=null;
-  const planCounts = { free:0, starter:0, premium:0 };
+  let registered=null, verified=null, paying=null, mrr=null;
+  const planCounts = { free:0, pro:0, premium:0 };
+  let bizList = [];
   if (bizRes.status==='fulfilled' && bizRes.value.data) {
-    const biz = bizRes.value.data;
-    registered = biz.length; verified = biz.filter(b=>b.status==='verified').length;
-    biz.forEach(b => { const p=(b.plan||'free').toLowerCase(); if(p in planCounts) planCounts[p]++; });
-    mrr = planCounts.starter*PLAN_PRICES.starter + planCounts.premium*PLAN_PRICES.premium;
+    bizList = bizRes.value.data;
+    registered = bizList.length;
+    verified = bizList.filter(b=>b.status==='verified').length;
+    bizList.forEach(b => { const p=(b.plan||'free').toLowerCase(); if(p in planCounts) planCounts[p]++; });
+    paying = planCounts.pro + planCounts.premium;
+    mrr = planCounts.pro*PLAN_PRICES.pro + planCounts.premium*PLAN_PRICES.premium;
   }
 
   set('b-waitlist', fmt(waitlist));    set('b-waitlist-d', delta(waitlist, pWaitlist));
   set('b-registered', fmt(registered));
+  set('b-registered-sub', (registered!==null && waitlist) ? `${fmtPct(registered/waitlist*100)} de la waitlist` : '');
   set('b-verified', fmt(verified));
-  set('b-mrr', mrr!==null ? fmt(mrr)+' €' : '—');
+  set('b-verified-sub', (verified!==null && registered) ? `${fmtPct(verified/registered*100)} de los registrados` : '');
+  set('b-paying', fmt(paying));
+  set('b-paying-sub', (paying!==null && verified) ? `${fmtPct(paying/verified*100)} de los verificados` : '');
+  set('b-mrr', mrr!==null ? fmtDec(mrr,2)+' €' : '—');
 
   if (registered!==null) {
-    set('b-plans-wrap', [['free','Free',planCounts.free],['starter','Starter',planCounts.starter],['premium','Premium',planCounts.premium]]
+    set('b-plans-wrap', [['free','Free',planCounts.free],['pro','Pro',planCounts.pro],['premium','Premium',planCounts.premium]]
       .map(([k,l,n])=>`<div class="plan-row"><span class="plan-pill ${k}">${l}</span><span style="font-family:var(--serif);font-size:20px">${fmt(n)}</span></div>`)
       .join(''));
   }
@@ -1123,23 +1150,71 @@ async function loadB2B() {
     }]);
   }
 
+  // ── Zonas con desequilibrio ──────────────────────────────────────────────
+  // Agrupa posts del período por proximidad (misma función/escala que ya usa
+  // el mapa, 500m) y cuenta cuántos business_accounts hay a esa distancia de
+  // cada grupo. Índice = posts / (restaurantes + 1): prioriza, no predice.
+  if (zonePostsRes.status==='fulfilled' && zonePostsRes.value.data) {
+    const pts = zonePostsRes.value.data.filter(p=>p.lat&&p.lng);
+    const zones = clusterPoints(pts, 500)
+      .map(cl => {
+        const nearbyBiz = bizList.filter(b=>b.lat&&b.lng&&haversineM(cl.lat,cl.lng,b.lat,b.lng)<=500).length;
+        return { lat:cl.lat, lng:cl.lng, posts:cl.count, biz:nearbyBiz, score: cl.count/(nearbyBiz+1) };
+      })
+      .filter(z => z.posts >= 3)
+      .sort((a,b)=>b.score-a.score)
+      .slice(0,50);
+
+    renderTable('zones',[
+      {label:'#',render:(_,i)=>i+1,rank:true},
+      {label:'Posts',key:'posts',right:true,render:r=>fmt(r.posts)},
+      {label:'Restaurantes cerca',key:'biz',right:true,render:r=>fmt(r.biz)},
+      {label:'Índice de oportunidad',key:'score',right:true,render:r=>fmtDec(r.score,1)},
+      {label:'',render:r=>`<button class="outreach-btn" onclick="focusMapAt(${r.lat},${r.lng})">Ver en el mapa →</button>`},
+    ], zones);
+  }
+
   // Contacted names
   const outreachData = outreachRes.status==='fulfilled' ? outreachRes.value.data||[] : [];
-  const outreachError = outreachRes.status==='fulfilled' ? outreachRes.value.error : null;
   const contactedNames = new Set(outreachData.map(o=>o.restaurant_name.toLowerCase()));
 
-  // Candidates
-  if (postsAllRes.status==='fulfilled' && postsAllRes.value.data && bizNamesRes.status==='fulfilled' && bizNamesRes.value.data) {
-    const postCounts = {};
-    postsAllRes.value.data.forEach(p=>{ if(p.restaurant) postCounts[p.restaurant]=(postCounts[p.restaurant]||0)+1; });
-    const bizNames = new Set(bizNamesRes.value.data.map(b=>b.restaurant_name?.toLowerCase()).filter(Boolean));
-    const candidates = Object.entries(postCounts)
-      .filter(([name,n])=>n>=5 && !bizNames.has(name.toLowerCase()) && !contactedNames.has(name.toLowerCase()))
-      .sort((a,b)=>b[1]-a[1]).slice(0,100)
-      .map(([name,n])=>({name,n}));
+  // ── Candidatos ───────────────────────────────────────────────────────────
+  // Agrupa TODOS los posts con restaurante por proximidad (70m — el mismo
+  // radio, con margen, que ya usa el panel de negocio para decidir "esto es
+  // sobre mí"), no por coincidencia exacta de texto. Dentro de cada grupo
+  // resultante, la etiqueta es el nombre normalizado más frecuente; las
+  // demás variantes de texto vistas se muestran entre paréntesis. Se excluye
+  // por PROXIMIDAD a un business_accounts existente (≤50m), no por nombre —
+  // así un negocio ya registrado con un nombre ligeramente distinto al que
+  // usan sus clientes no aparece como candidato a vender.
+  if (postsAllRes.status==='fulfilled' && postsAllRes.value.data) {
+    const pts = postsAllRes.value.data.filter(p=>p.lat&&p.lng&&p.restaurant);
+    const candidates = clusterPoints(pts, 70)
+      .filter(cl => cl.count >= 5)
+      .filter(cl => !bizList.some(b=>b.lat&&b.lng&&haversineM(cl.lat,cl.lng,b.lat,b.lng)<=50))
+      .map(cl => {
+        const nameCounts = {};
+        cl.items.forEach(p => {
+          const norm = normalizeRestaurantName(p.restaurant);
+          if (!norm) return;
+          if (!nameCounts[norm]) nameCounts[norm] = { count:0, raw:p.restaurant };
+          nameCounts[norm].count++;
+        });
+        const sorted = Object.values(nameCounts).sort((a,b)=>b.count-a.count);
+        return {
+          name: sorted[0]?.raw ?? '—',
+          altNames: sorted.slice(1).map(n=>n.raw),
+          n: cl.count, lat: cl.lat, lng: cl.lng,
+        };
+      })
+      .filter(c => !contactedNames.has(c.name.toLowerCase()))
+      .sort((a,b)=>b.n-a.n).slice(0,100);
+
     renderTable('candidates',[
       {label:'#',render:(_,i)=>i+1,rank:true},
-      {label:'Restaurante',key:'name'},
+      {label:'Restaurante',render:r=>r.altNames.length
+        ? `${esc(r.name)} <span style="opacity:.4;font-size:11px">(o ${r.altNames.map(esc).join(', ')})</span>`
+        : esc(r.name)},
       {label:'Menciones',key:'n',right:true,render:r=>fmt(r.n)},
       {label:'',render:r=>`<button class="outreach-btn" onclick="markContacted(${JSON.stringify(r.name)})">Contactar</button>`},
     ], candidates);
@@ -1154,6 +1229,12 @@ async function loadB2B() {
     const sec = document.getElementById('contacted-section');
     if (sec) sec.style.display='';
   }
+}
+
+function focusMapAt(lat, lng) {
+  const mapaSection = document.getElementById('mapa');
+  if (mapaSection) mapaSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (leafletMap) setTimeout(() => leafletMap.setView([lat, lng], 16), 300);
 }
 
 async function markContacted(name) {
