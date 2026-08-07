@@ -179,9 +179,9 @@
 
       // Insert verification record
       const { error: insertError } = await sb.from('business_verification_docs').insert({
-        business_id:  businessId,
-        document_url: path,
-        status:       'pending'
+        business_id: businessId,
+        doc_url:     path,
+        status:      'pending'
       });
 
       if (insertError) {
