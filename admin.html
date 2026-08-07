@@ -141,6 +141,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
     <a href="#comportamiento" data-section="comportamiento">Comportamiento</a>
     <a href="#contenido"      data-section="contenido">Contenido</a>
     <a href="#social"         data-section="social">Social</a>
+    <a href="#inversor"       data-section="inversor">Métricas de Inversor</a>
     <a href="#b2b"            data-section="b2b">Negocios B2B</a>
     <a href="#mapa"           data-section="mapa">Mapa</a>
   </nav>
@@ -223,13 +224,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
         <div class="chart-title">Sesiones por hora del día</div>
         <canvas id="hours-chart" height="80"></canvas>
       </div>
-      <div class="section-subtitle">Retención por cohorte (últimas 8 semanas)</div>
-      <div class="cohort-wrap">
-        <table class="data-table">
-          <thead><tr><th>Semana registro</th><th>Usuarios</th><th>Semana 1</th><th>Semana 2</th><th>Semana 3</th><th>Semana 4</th></tr></thead>
-          <tbody id="cohort-tbody"><tr><td colspan="6"><span class="skeleton" style="display:block;height:14px;width:80%;margin:12px"></span></td></tr></tbody>
-        </table>
-      </div>
+      <p style="font-size:12px;color:rgba(245,240,232,.35);margin-top:4px">La retención por cohortes se movió a "Métricas de Inversor" →</p>
     </section>
 
     <!-- ── Comportamiento ─────────────────────────────────── -->
@@ -336,6 +331,58 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
         <div class="stat-card"><div class="stat-label">Solicitudes rechazadas</div><div class="stat-value" id="s-req-rej">—</div></div>
         <div class="stat-card"><div class="stat-label">Tasa de aceptación</div><div class="stat-value sm" id="s-accept-rate">—</div></div>
       </div>
+    </section>
+
+    <!-- ── Métricas de Inversor ─────────────────────────────── -->
+    <section class="section" id="inversor">
+      <div class="section-title">Métricas de Inversor</div>
+
+      <div class="section-subtitle" style="margin-top:0">Crecimiento semanal</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Usuarios nuevos (última semana)</div><div class="stat-value" id="inv-users-week">—</div><div class="stat-delta" id="inv-users-week-d"></div></div>
+        <div class="stat-card"><div class="stat-label">Restaurantes nuevos (última semana)</div><div class="stat-value" id="inv-biz-week">—</div><div class="stat-delta" id="inv-biz-week-d"></div></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Usuarios nuevos por semana (últimas 12)</div>
+        <canvas id="inv-users-chart" height="80"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Restaurantes registrados por semana (últimas 12)</div>
+        <canvas id="inv-biz-chart" height="80"></canvas>
+      </div>
+
+      <div class="section-subtitle">Retención por cohortes</div>
+      <p style="font-size:12px;color:rgba(245,240,232,.4);margin:-4px 0 12px;max-width:680px;line-height:1.6">
+        "Activo" = al menos un <code>session_open</code> esa semana, el mismo criterio que DAU/WAU/MAU en el resto del panel. Los porcentajes en <em>cursiva</em> son de semanas cuyo dato de sesión ya no existe (se purga a los 90 días) — ahí se usa como aproximación si el usuario publicó al menos un post esa semana, un criterio más exigente que subestima la retención real. No los leas como el mismo número que los que no están en cursiva.
+      </p>
+      <div class="cohort-wrap">
+        <table class="data-table">
+          <thead><tr id="inv-cohort-thead"><th>Cohorte</th><th>Usuarios</th></tr></thead>
+          <tbody id="inv-cohort-tbody"><tr><td colspan="10"><span class="skeleton" style="display:block;height:14px;width:80%;margin:12px"></span></td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-subtitle">Salud del producto</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Posts por usuario activo (período)</div><div class="stat-value" id="inv-posts-per-active">—</div></div>
+        <div class="stat-card"><div class="stat-label">Ha publicado alguna vez</div><div class="stat-value" id="inv-pct-posted">—</div></div>
+        <div class="stat-card"><div class="stat-label">Amigos por usuario (media)</div><div class="stat-value" id="inv-avg-friends">—</div></div>
+        <div class="stat-card"><div class="stat-label">Feed no vacío</div><div class="stat-value" id="inv-pct-feed">—</div><div class="stat-delta" id="inv-pct-feed-sub"></div></div>
+        <div class="stat-card"><div class="stat-label">Tiempo hasta el 1er post</div><div class="stat-value sm" id="inv-time-to-post">—</div><div class="stat-delta" id="inv-time-to-post-sub"></div></div>
+      </div>
+
+      <div class="section-subtitle">El marketplace</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Usuarios por restaurante verificado</div><div class="stat-value" id="inv-ratio">—</div></div>
+        <div class="stat-card"><div class="stat-label">Posts cerca de un negocio registrado</div><div class="stat-value" id="inv-pct-monetizable">—</div></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Usuarios vs. restaurantes verificados (acumulado, por semana)</div>
+        <canvas id="inv-marketplace-chart" height="80"></canvas>
+      </div>
+      <p style="font-size:11px;color:rgba(245,240,232,.3);margin-top:8px;max-width:680px;line-height:1.6">
+        La línea de restaurantes usa la fecha real de verificación (<code>verified_at</code>), no la de registro. Solo cuenta aprobaciones hechas desde que existe esa columna — las verificadas antes no tienen fecha conocida y no aparecen en la serie histórica, aunque sí cuentan en el ratio de arriba.
+      </p>
     </section>
 
     <!-- ── B2B ────────────────────────────────────────────── -->
@@ -496,10 +543,10 @@ async function loadCities() {
 function showAllSkeletons() {
   document.querySelectorAll('.stat-value').forEach(el => { el.innerHTML = skeletonStat(); });
   document.querySelectorAll('.stat-delta').forEach(el => { el.innerHTML = ''; });
-  ['tbl-screens','tbl-searches','tbl-rvrestaurants','tbl-top-rests','tbl-top-dishes','tbl-candidates','tbl-contacted'].forEach(id => {
+  ['tbl-screens','tbl-searches','tbl-rvrestaurants','tbl-top-rests','tbl-top-dishes','tbl-zones','tbl-candidates','tbl-contacted'].forEach(id => {
     const el = document.getElementById(id); if (el) el.innerHTML = skeletonTableHtml();
   });
-  set('cohort-tbody', '<tr><td colspan="6"><span class="skeleton" style="display:block;height:13px;width:80%;margin:12px"></span></td></tr>');
+  set('inv-cohort-tbody', '<tr><td colspan="10"><span class="skeleton" style="display:block;height:13px;width:80%;margin:12px"></span></td></tr>');
 }
 
 async function applyFilters() {
@@ -522,7 +569,7 @@ async function applyFilters() {
 
   await Promise.allSettled([
     loadResumen(), loadUsuarios(), loadComportamiento(),
-    loadContenido(), loadSocial(), loadB2B(),
+    loadContenido(), loadSocial(), loadInversor(), loadB2B(),
   ]);
   loadMapa();
   set('last-updated', 'Actualizado: ' + new Date().toLocaleString('es-ES'));
@@ -646,6 +693,17 @@ function buildDayMap(from, to) {
   while (cur <= end) { map[cur.toISOString().slice(0,10)] = 0; cur.setDate(cur.getDate() + 1); }
   return map;
 }
+
+// Semanas ISO (lunes a domingo) en UTC — alineadas con date_trunc('week', ...)
+// de Postgres, para que coincidan con user_weekly_activity.
+function mondayOf(d) {
+  const dt = new Date(d);
+  dt.setUTCHours(0, 0, 0, 0);
+  const day = dt.getUTCDay(); // 0=domingo..6=sábado
+  dt.setUTCDate(dt.getUTCDate() + (day === 0 ? -6 : 1 - day));
+  return dt;
+}
+function weekKey(d) { return mondayOf(d).toISOString().slice(0, 10); }
 
 // helpers to build filtered queries
 function pq(table, extraEq, useCity) {
@@ -811,40 +869,6 @@ async function loadUsuarios() {
     makeBarChart('hours-chart', Array.from({length:24},(_,i)=>`${i}h`), hours, 'rgba(80,140,255,.5)');
   }
 
-  // Cohort retention
-  loadCohortRetention();
-}
-
-async function loadCohortRetention() {
-  const eightWeeksAgo = new Date(Date.now() - 56*86400000).toISOString();
-  const { data: profiles } = await sb.from('profiles').select('id, created_at').eq('role', 'user').gte('created_at', eightWeeksAgo).limit(500);
-  if (!profiles || !profiles.length) { set('cohort-tbody','<tr><td colspan="6" style="color:rgba(245,240,232,.35);padding:12px;text-align:center">Sin datos</td></tr>'); return; }
-
-  const ids = profiles.map(p=>p.id).slice(0,100);
-  const { data: events } = await sb.from('user_events').select('user_id, created_at').eq('event_type','session_open').in('user_id', ids);
-  const userSess = {};
-  (events||[]).forEach(e => { if(!userSess[e.user_id]) userSess[e.user_id]=[]; userSess[e.user_id].push(new Date(e.created_at).getTime()); });
-
-  const WEEK = 7*86400000;
-  const cohorts = {};
-  profiles.forEach(p => {
-    const t = new Date(p.created_at).getTime();
-    const w = Math.floor(t/WEEK);
-    if (!cohorts[w]) cohorts[w] = { users:[], wStart: new Date(w*WEEK) };
-    cohorts[w].users.push({ id: p.id, t });
-  });
-
-  const rows = Object.entries(cohorts).sort((a,b)=>a[0]-b[0]).slice(-8).map(([,{users,wStart}]) => {
-    const lbl = wStart.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
-    const n = users.length;
-    const ret = [1,2,3,4].map(w => {
-      const s = wStart.getTime() + w*WEEK, e2 = s+WEEK;
-      const r = users.filter(u=>(userSess[u.id]||[]).some(t=>t>=s&&t<e2)).length;
-      return n>0 ? Math.round(r/n*100) : 0;
-    });
-    return `<tr><td>${lbl}</td><td>${n}</td>${ret.map(p=>`<td style="color:${p>=30?'#50d278':p>=10?'#F5C842':'rgba(245,240,232,.4)'}">${p}%</td>`).join('')}</tr>`;
-  });
-  set('cohort-tbody', rows.join('') || '<tr><td colspan="6" style="color:rgba(245,240,232,.35);padding:12px">Sin datos</td></tr>');
 }
 
 // ── Comportamiento ────────────────────────────────────────────────────────────
@@ -1090,6 +1114,244 @@ async function loadSocial() {
   set('s-req-acc', fmt(acc));      set('s-req-acc-d', delta(acc, pacc));
   set('s-req-rej', fmt(rej));
   set('s-accept-rate', rate!==null ? fmtDec(rate,1)+'%' : '—');
+}
+
+// ── Métricas de Inversor ────────────────────────────────────────────────────
+
+async function loadInversor() {
+  await Promise.allSettled([
+    loadInversorGrowth(),
+    loadInversorCohorts(),
+    loadInversorHealth(),
+    loadInversorMarketplace(),
+  ]);
+}
+
+// Crecimiento semanal — deliberadamente NO usa el filtro de período global
+// (F.from/F.to): esta es LA métrica de tracción, necesita su propia ventana
+// fija de varias semanas, no la que el admin haya dejado puesta en el filtro.
+async function loadInversorGrowth() {
+  const [usersRes, bizRes] = await Promise.allSettled([
+    sb.from('profiles').select('created_at').eq('role','user').limit(5000),
+    sb.from('business_accounts').select('created_at').limit(5000),
+  ]);
+
+  function weeklySeries(rows) {
+    const map = {};
+    rows.forEach(r => { const k = weekKey(r.created_at); map[k] = (map[k]||0) + 1; });
+    const weeks = Object.keys(map).sort().slice(-12);
+    return { weeks, counts: weeks.map(k => map[k]) };
+  }
+
+  if (usersRes.status==='fulfilled' && usersRes.value.data) {
+    const { weeks, counts } = weeklySeries(usersRes.value.data);
+    const thisW = counts[counts.length-1] ?? 0, prevW = counts.length>1 ? counts[counts.length-2] : null;
+    set('inv-users-week', fmt(thisW));
+    set('inv-users-week-d', delta(thisW, prevW));
+    makeLineChart('inv-users-chart', weeks.map(k=>new Date(k+'T00:00:00Z').toLocaleDateString('es-ES',{day:'numeric',month:'short'})), [{
+      data: counts, borderColor:'rgba(80,200,120,.8)', backgroundColor:'rgba(80,200,120,.1)', tension:0.3, fill:true, pointRadius:2,
+    }]);
+  }
+
+  if (bizRes.status==='fulfilled' && bizRes.value.data) {
+    const { weeks, counts } = weeklySeries(bizRes.value.data);
+    const thisW = counts[counts.length-1] ?? 0, prevW = counts.length>1 ? counts[counts.length-2] : null;
+    set('inv-biz-week', fmt(thisW));
+    set('inv-biz-week-d', delta(thisW, prevW));
+    makeLineChart('inv-biz-chart', weeks.map(k=>new Date(k+'T00:00:00Z').toLocaleDateString('es-ES',{day:'numeric',month:'short'})), [{
+      data: counts, borderColor:'rgba(196,98,45,.8)', backgroundColor:'rgba(196,98,45,.1)', tension:0.3, fill:true, pointRadius:2,
+    }]);
+  }
+}
+
+// Retención por cohortes — dos capas. user_weekly_activity es la fuente
+// permanente (si ya existe: la consulta falla en silencio si la tabla aún no
+// se ha creado, y todo cae al proxy). posts.created_at es el respaldo que
+// nunca se purga, para semanas ya perdidas antes de que existiera la tabla.
+// Topes de rendimiento: 2000 perfiles, 1500 ids en los .in() — mismo orden de
+// magnitud que ya usaba la función de cohortes anterior (500/100), ampliado
+// porque ahora cubre más semanas, no ilimitado.
+async function loadInversorCohorts() {
+  const NUM_COHORT_WEEKS = 10;
+  const NUM_RELATIVE_WEEKS = 8;
+  const colCount = NUM_RELATIVE_WEEKS + 2;
+  const thead = document.getElementById('inv-cohort-thead');
+  const tbody = document.getElementById('inv-cohort-tbody');
+
+  const since = new Date(Date.now() - (NUM_COHORT_WEEKS + NUM_RELATIVE_WEEKS) * 7 * 86400000);
+  const { data: profiles } = await sb.from('profiles').select('id, created_at').eq('role','user').gte('created_at', since.toISOString()).limit(2000);
+
+  if (!profiles || !profiles.length) {
+    thead.innerHTML = '<th>Cohorte</th><th>Usuarios</th>';
+    tbody.innerHTML = `<tr><td colspan="${colCount}" style="color:rgba(245,240,232,.35);padding:12px;text-align:center">Sin datos todavía — se irá llenando semana a semana.</td></tr>`;
+    return;
+  }
+
+  thead.innerHTML = '<th>Cohorte</th><th>Usuarios</th>' + Array.from({length:NUM_RELATIVE_WEEKS},(_,i)=>`<th>Sem ${i}</th>`).join('');
+
+  const cohorts = {};
+  profiles.forEach(p => { const k = weekKey(p.created_at); (cohorts[k] ??= []).push(p.id); });
+  const cohortWeeks = Object.keys(cohorts).sort().slice(-NUM_COHORT_WEEKS);
+  const allIds = profiles.map(p=>p.id).slice(0,1500);
+
+  // Fuente permanente: user_weekly_activity (puede no existir todavía).
+  let weeklyActivityByUser = {};
+  let weeklyActivityWeeks = new Set();
+  try {
+    const { data: wa, error: waErr } = await sb.from('user_weekly_activity').select('user_id, week_start').in('user_id', allIds);
+    if (waErr) throw waErr;
+    (wa||[]).forEach(r => {
+      const k = String(r.week_start).slice(0,10);
+      (weeklyActivityByUser[r.user_id] ??= new Set()).add(k);
+      weeklyActivityWeeks.add(k);
+    });
+  } catch (e) {
+    console.warn('[inversor] user_weekly_activity no disponible todavía — usando proxy de posts para todo. ¿Ejecutaste el SQL?', e.message);
+  }
+
+  // Respaldo, siempre disponible: posts.created_at.
+  const { data: posts } = await sb.from('posts').select('user_id, created_at').in('user_id', allIds).limit(5000);
+  const postsByUser = {};
+  (posts||[]).forEach(p => { (postsByUser[p.user_id] ??= []).push(new Date(p.created_at)); });
+
+  function wasActive(userId, weekStartDate) {
+    const k = weekKey(weekStartDate);
+    if (weeklyActivityWeeks.has(k)) {
+      return { active: (weeklyActivityByUser[userId]||new Set()).has(k), proxy: false };
+    }
+    const weekEnd = new Date(weekStartDate.getTime() + 7*86400000);
+    const active = (postsByUser[userId]||[]).some(t => t>=weekStartDate && t<weekEnd);
+    return { active, proxy: true };
+  }
+
+  const now = new Date();
+  const rows = cohortWeeks.map(wk => {
+    const ids = cohorts[wk];
+    const n = ids.length;
+    const wStart = new Date(wk + 'T00:00:00Z');
+    const cells = Array.from({length:NUM_RELATIVE_WEEKS}, (_,i) => {
+      const targetWeek = new Date(wStart.getTime() + i*7*86400000);
+      if (targetWeek > now) return null;
+      let activeCount = 0, anyProxy = false;
+      ids.forEach(id => {
+        const r = wasActive(id, targetWeek);
+        if (r.active) activeCount++;
+        if (r.proxy) anyProxy = true;
+      });
+      return { pct: n>0 ? Math.round(activeCount/n*100) : 0, proxy: anyProxy };
+    });
+    return { wk, n, cells };
+  });
+
+  tbody.innerHTML = rows.map(({wk,n,cells}) => {
+    const lbl = new Date(wk+'T00:00:00Z').toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+    const cellsHtml = cells.map(c => {
+      if (c === null) return '<td style="color:rgba(245,240,232,.15)">—</td>';
+      const color = c.pct>=30?'#50d278':c.pct>=10?'#F5C842':'rgba(245,240,232,.4)';
+      const style = c.proxy ? `color:${color};font-style:italic;opacity:.75` : `color:${color}`;
+      const title = c.proxy ? 'Aproximado por posts — dato de sesión ya purgado' : 'Basado en sesiones reales';
+      return `<td style="${style}" title="${title}">${c.pct}%</td>`;
+    }).join('');
+    return `<tr><td>${lbl}</td><td>${fmt(n)}</td>${cellsHtml}</tr>`;
+  }).join('') || `<tr><td colspan="${colCount}" style="color:rgba(245,240,232,.35);padding:12px;text-align:center">Sin datos</td></tr>`;
+}
+
+// Salud del producto. "Posts por usuario activo" está acotado al período
+// global (misma noción de "activo" = session_open); el resto es acumulado
+// histórico porque son métricas de activación/relación, no de un momento dado.
+async function loadInversorHealth() {
+  const [profilesRes, postsRes, friendshipsRes, sessRes] = await Promise.allSettled([
+    sb.from('profiles').select('id, created_at').eq('role','user').limit(5000),
+    sb.from('posts').select('user_id, created_at').limit(5000),
+    sb.from('friendships').select('sender_id, receiver_id').eq('status','accepted').limit(5000),
+    sb.from('user_events').select('user_id').eq('event_type','session_open').gte('created_at',F.from).lte('created_at',F.to).limit(5000),
+  ]);
+
+  const profiles = profilesRes.status==='fulfilled' ? profilesRes.value.data||[] : [];
+  const posts = postsRes.status==='fulfilled' ? postsRes.value.data||[] : [];
+  const friendships = friendshipsRes.status==='fulfilled' ? friendshipsRes.value.data||[] : [];
+  const sessions = sessRes.status==='fulfilled' ? sessRes.value.data||[] : [];
+  const totalUsers = profiles.length;
+
+  const activeUserIds = new Set(sessions.map(s=>s.user_id));
+  const postsInPeriod = posts.filter(p => p.created_at>=F.from && p.created_at<=F.to);
+  set('inv-posts-per-active', activeUserIds.size>0 ? fmtDec(postsInPeriod.length/activeUserIds.size,2) : '—');
+
+  const postedUserIds = new Set(posts.map(p=>p.user_id));
+  set('inv-pct-posted', totalUsers>0 ? fmtPct(postedUserIds.size/totalUsers*100) : '—');
+
+  const friendCount = {};
+  friendships.forEach(f => {
+    friendCount[f.sender_id] = (friendCount[f.sender_id]||0)+1;
+    friendCount[f.receiver_id] = (friendCount[f.receiver_id]||0)+1;
+  });
+  const totalFriendLinks = Object.values(friendCount).reduce((s,n)=>s+n,0);
+  set('inv-avg-friends', totalUsers>0 ? fmtDec(totalFriendLinks/totalUsers,1) : '—');
+
+  let withNonEmptyFeed = 0;
+  profiles.forEach(p => {
+    const friends = friendships
+      .filter(f=>f.sender_id===p.id || f.receiver_id===p.id)
+      .map(f=>f.sender_id===p.id ? f.receiver_id : f.sender_id);
+    if (friends.some(fid => postedUserIds.has(fid))) withNonEmptyFeed++;
+  });
+  set('inv-pct-feed', totalUsers>0 ? fmtPct(withNonEmptyFeed/totalUsers*100) : '—');
+  set('inv-pct-feed-sub', totalUsers>0 ? `${fmt(withNonEmptyFeed)} de ${fmt(totalUsers)}` : '');
+
+  const firstPostByUser = {};
+  posts.forEach(p => {
+    const t = new Date(p.created_at).getTime();
+    if (!firstPostByUser[p.user_id] || t<firstPostByUser[p.user_id]) firstPostByUser[p.user_id] = t;
+  });
+  const signupByUser = {};
+  profiles.forEach(p => signupByUser[p.id] = new Date(p.created_at).getTime());
+  const daysToFirstPost = Object.entries(firstPostByUser)
+    .filter(([uid]) => signupByUser[uid] != null)
+    .map(([uid,t]) => (t - signupByUser[uid]) / 86400000)
+    .filter(d => d >= 0);
+  const avgDays = daysToFirstPost.length>0 ? daysToFirstPost.reduce((s,d)=>s+d,0)/daysToFirstPost.length : null;
+  set('inv-time-to-post', avgDays!==null ? `${fmtDec(avgDays,1)} días` : '—');
+  set('inv-time-to-post-sub', avgDays!==null ? `Media solo entre quienes han publicado (${fmt(postedUserIds.size)} de ${fmt(totalUsers)})` : '');
+}
+
+// El marketplace. El ratio y el % monetizable son foto de hoy; el gráfico usa
+// registro acumulado (no verificación, que no tiene fecha guardada — ver nota
+// en la UI).
+async function loadInversorMarketplace() {
+  const [usersCountRes, bizRes, postsRes, allUsersRes, allBizRes] = await Promise.allSettled([
+    sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user'),
+    sb.from('business_accounts').select('id, status, lat, lng'),
+    sb.from('posts').select('lat,lng').not('lat','is',null).not('lng','is',null).order('created_at',{ascending:false}).limit(2000),
+    sb.from('profiles').select('created_at').eq('role','user').limit(5000),
+    sb.from('business_accounts').select('verified_at').not('verified_at','is',null).limit(5000),
+  ]);
+
+  const totalUsers = usersCountRes.status==='fulfilled' ? usersCountRes.value.count : null;
+  const bizList = bizRes.status==='fulfilled' ? bizRes.value.data||[] : [];
+  const verifiedCount = bizList.filter(b=>b.status==='verified').length;
+  set('inv-ratio', (totalUsers!==null && verifiedCount>0) ? `${fmt(Math.round(totalUsers/verifiedCount))}:1` : '—');
+
+  if (postsRes.status==='fulfilled' && postsRes.value.data) {
+    const posts = postsRes.value.data.filter(p=>p.lat&&p.lng);
+    const nearBiz = posts.filter(p => bizList.some(b=>b.lat&&b.lng&&haversineM(p.lat,p.lng,b.lat,b.lng)<=50));
+    set('inv-pct-monetizable', posts.length>0 ? fmtPct(nearBiz.length/posts.length*100) : '—');
+  }
+
+  if (allUsersRes.status==='fulfilled' && allUsersRes.value.data && allUsersRes.value.data.length>0) {
+    const users = allUsersRes.value.data;
+    const bizVerified = allBizRes.status==='fulfilled' ? allBizRes.value.data||[] : [];
+    const weekMapUsers = {}, weekMapVerified = {};
+    users.forEach(p=>{ const k=weekKey(p.created_at); weekMapUsers[k]=(weekMapUsers[k]||0)+1; });
+    bizVerified.forEach(b=>{ const k=weekKey(b.verified_at); weekMapVerified[k]=(weekMapVerified[k]||0)+1; });
+    const allWeeks = [...new Set([...Object.keys(weekMapUsers), ...Object.keys(weekMapVerified)])].sort();
+    let cu=0, cv=0;
+    const cumUsers=[], cumVerified=[];
+    allWeeks.forEach(k => { cu+=weekMapUsers[k]||0; cv+=weekMapVerified[k]||0; cumUsers.push(cu); cumVerified.push(cv); });
+    makeLineChart('inv-marketplace-chart', allWeeks.map(k=>new Date(k+'T00:00:00Z').toLocaleDateString('es-ES',{day:'numeric',month:'short'})), [
+      { label:'Usuarios', data: cumUsers, borderColor:'rgba(80,140,255,.8)', backgroundColor:'rgba(80,140,255,.08)', tension:0.3, fill:true, pointRadius:0 },
+      { label:'Restaurantes verificados', data: cumVerified, borderColor:'rgba(196,98,45,.8)', backgroundColor:'rgba(196,98,45,.08)', tension:0.3, fill:true, pointRadius:0 },
+    ]);
+  }
 }
 
 // ── B2B ───────────────────────────────────────────────────────────────────────

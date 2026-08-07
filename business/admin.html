@@ -326,7 +326,7 @@ async function approveDoc(docId, accountId) {
 
   const { error: e1 } = await sb
     .from('business_accounts')
-    .update({ status: 'verified' })
+    .update({ status: 'verified', verified_at: new Date().toISOString() })
     .eq('id', accountId);
 
   const { error: e2 } = await sb
