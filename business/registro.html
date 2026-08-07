@@ -117,6 +117,20 @@
       '<div class="alert alert-warning">Tu sesión no tiene ningún restaurante registrado todavía. Completa el registro para acceder al panel.</div>';
   }
 
+  // Ciudad canónica extraída del address de Nominatim (addressdetails=1) y su
+  // desglose crudo, para poblar business_accounts.city / address_components.
+  // Se rellenan solo cuando el geocoding tiene éxito; si no, el submit cae de
+  // vuelta al valor tecleado a mano en el campo "Ciudad".
+  let geocodedCity = null;
+  let geocodedAddressComponents = null;
+
+  // Mismo orden de preferencia que create.tsx en la app — sin caer nunca a
+  // county/state, para no guardar una ciudad "confiadamente incorrecta".
+  function extractCity(address) {
+    if (!address) return null;
+    return address.city ?? address.town ?? address.village ?? address.municipality ?? null;
+  }
+
   // Geocoding on address blur
   async function geocodeAddress() {
     const direccion = document.getElementById('direccion').value.trim();
@@ -130,7 +144,7 @@
 
     try {
       const q   = encodeURIComponent(`${direccion}, ${ciudad}`);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1&addressdetails=1`, {
         headers: { 'Accept-Language': 'es', 'User-Agent': 'YumlistBusiness/1.0' }
       });
       const data = await res.json();
@@ -138,15 +152,21 @@
       if (data.length > 0) {
         document.getElementById('lat').value = data[0].lat;
         document.getElementById('lng').value = data[0].lon;
+        geocodedCity = extractCity(data[0].address);
+        geocodedAddressComponents = data[0].address ?? null;
         status.textContent = `✓ Encontrado: ${data[0].display_name.split(',').slice(0, 2).join(',')}`;
         status.className   = 'geocode-status geocode-ok';
       } else {
         document.getElementById('lat').value = '';
         document.getElementById('lng').value = '';
+        geocodedCity = null;
+        geocodedAddressComponents = null;
         status.textContent = 'No se encontraron coordenadas — puedes continuar y actualizar la dirección más adelante.';
         status.className   = 'geocode-status geocode-err';
       }
     } catch {
+      geocodedCity = null;
+      geocodedAddressComponents = null;
       status.textContent = 'Error al geocodificar — continúa igualmente.';
       status.className   = 'geocode-status geocode-err';
     }
@@ -237,17 +257,18 @@
           'Prefer':        'return=representation'
         },
         body: JSON.stringify({
-          id:              userId,
-          email:           email,
-          restaurant_name: nombre,
-          cif:             cif,
-          owner_name:      titular,
-          phone:           telefono,
-          city:            ciudad,
-          lat:             lat,
-          lng:             lng,
-          status:          'pending',
-          plan:            'free'
+          id:                 userId,
+          email:              email,
+          restaurant_name:    nombre,
+          cif:                cif,
+          owner_name:         titular,
+          phone:              telefono,
+          city:               geocodedCity || ciudad,
+          address_components: geocodedAddressComponents,
+          lat:                lat,
+          lng:                lng,
+          status:             'pending',
+          plan:               'free'
         })
       });
 

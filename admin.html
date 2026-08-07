@@ -524,17 +524,17 @@ function updatePeriodIndicator() {
 }
 
 async function loadCities() {
+  // Lee la columna city directamente — ya no se adivina cortando la
+  // dirección por la última coma (ese heurístico era la causa del bug:
+  // devolvía calles, códigos postales o el país según cómo viniera formada
+  // la dirección de origen).
   const { data: cityData } = await sb
     .from('posts')
-    .select('address')
-    .not('address', 'is', null)
+    .select('city')
+    .not('city', 'is', null)
     .limit(1000);
 
-  const cities = [...new Set(
-    (cityData ?? [])
-      .map(p => p.address?.split(',').pop()?.trim())
-      .filter(Boolean)
-  )].sort();
+  const cities = [...new Set((cityData ?? []).map(p => p.city).filter(Boolean))].sort();
 
   const sel = document.getElementById('filter-city');
   cities.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });

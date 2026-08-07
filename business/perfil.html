@@ -334,6 +334,12 @@ function renderPage(account) {
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="form-label" for="ciudad">Ciudad</label>
+        <input class="form-input" type="text" id="ciudad" placeholder="Barcelona" value="${esc(account.city ?? '')}" autocomplete="address-level2">
+        <div class="form-hint">Se usa para agrupar tu restaurante por ciudad en las estadísticas. Corrígela aquí si no aparece bien.</div>
+      </div>
+
       <!-- Online -->
       <div class="section-sep">Presencia online</div>
       <div class="form-group">
@@ -527,6 +533,7 @@ async function saveProfile() {
     description:     document.getElementById('descripcion').value.trim() || null,
     cuisine_type:    document.getElementById('tipo_cocina').value.trim() || null,
     schedule:        document.getElementById('horario').value.trim() || null,
+    city:            document.getElementById('ciudad').value.trim() || null,
     booking_url:     document.getElementById('reservas_url').value.trim() || null,
     public_phone:    document.getElementById('telefono_publico').value.trim() || null,
     instagram:       document.getElementById('instagram').value.trim().replace(/^@/, '') || null,
