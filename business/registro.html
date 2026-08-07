@@ -98,9 +98,14 @@
 <script>
   // Redirect if already logged in AND already has a business account —
   // otherwise stay here, this is exactly where a session-without-account
-  // (e.g. bounced from the panel guard) is supposed to land.
+  // (e.g. bounced from the panel guard) is supposed to land. Admins are the
+  // one exception: they never belong on a registration form.
   sb.auth.getSession().then(async ({ data: { session } }) => {
     if (!session) return;
+    if (await isAdminUser(session.user.id)) {
+      window.location.replace('/business/admin');
+      return;
+    }
     const account = await getBusinessAccount(session.user.id);
     if (account) window.location.replace('/business/dashboard');
   });

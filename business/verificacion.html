@@ -89,6 +89,7 @@
     <div style="height:24px"></div>
 
     <div id="alert-container"></div>
+    <div id="status-box" style="display:none"></div>
     <div id="success-msg" style="display:none">
       <div class="alert alert-success" style="margin-bottom:24px">
         Documento recibido. Revisaremos tu solicitud en 24–48h y te avisaremos por email.
@@ -125,10 +126,61 @@
 <script>
   let businessId = null;
 
+  // Muestra el estado de la última solicitud si ya existe, en vez de
+  // presentar siempre el formulario en blanco — evita que alguien suba el
+  // mismo documento varias veces por no saber si la primera vez llegó.
+  async function renderExistingState() {
+    const { data: existing } = await sb
+      .from('business_verification_docs')
+      .select('status, created_at, admin_note')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!existing) return; // nada enviado todavía — formulario normal
+
+    const statusBox     = document.getElementById('status-box');
+    const uploadSection = document.getElementById('upload-section');
+
+    if (existing.status === 'pending') {
+      statusBox.innerHTML = `
+        <div class="alert alert-info" style="margin-bottom:24px">
+          Ya tienes un documento enviado el ${formatDate(existing.created_at)} — lo estamos revisando. Te avisaremos por email en 24–48h.
+          <a href="#" id="show-reupload" class="auth-link" style="display:block;margin-top:8px;font-size:12px">¿Necesitas subir otro documento? →</a>
+        </div>`;
+      statusBox.style.display = 'block';
+      uploadSection.style.display = 'none';
+      document.getElementById('show-reupload').addEventListener('click', e => {
+        e.preventDefault();
+        statusBox.style.display = 'none';
+        uploadSection.style.display = 'block';
+      });
+    } else if (existing.status === 'approved') {
+      statusBox.innerHTML = `
+        <div class="alert alert-success" style="margin-bottom:24px">Tu documentación ya está verificada.</div>
+        <a href="/business/dashboard" class="btn-ghost" style="width:100%;justify-content:center;">Ir al dashboard →</a>`;
+      statusBox.style.display = 'block';
+      uploadSection.style.display = 'none';
+    } else if (existing.status === 'rejected') {
+      const noteHtml = existing.admin_note
+        ? `<br><br>Motivo: &ldquo;${esc(existing.admin_note)}&rdquo;`
+        : '';
+      statusBox.innerHTML = `
+        <div class="alert alert-warning" style="margin-bottom:24px">
+          No pudimos verificar tu último documento (enviado el ${formatDate(existing.created_at)}).${noteHtml}<br><br>Puedes intentarlo de nuevo abajo.
+        </div>`;
+      statusBox.style.display = 'block';
+      // El formulario se queda visible: en rechazo, reenviar es la acción esperada.
+    }
+  }
+
   async function init() {
     const auth = await requireBusinessAccount();
     if (!auth) return;
     businessId = auth.session.user.id;
+
+    await renderExistingState();
 
     // File selection
     const fileInput = document.getElementById('doc-file');

@@ -13,17 +13,6 @@
   .doc-link { font-size: 12px; color: rgba(245,240,232,.5); text-decoration: none; transition: color .2s; }
   .doc-link:hover { color: var(--cream); }
 
-  /* Section tabs */
-  .admin-tabs { display: flex; gap: 0; border-bottom: 0.5px solid rgba(245,240,232,.12); margin-bottom: 24px; }
-  .admin-tab {
-    padding: 10px 24px; font-size: 14px; font-family: 'DM Sans', sans-serif;
-    color: rgba(245,240,232,.45); background: none; border: none; cursor: pointer;
-    border-bottom: 2px solid transparent; transition: color .2s, border-color .2s;
-    margin-bottom: -0.5px;
-  }
-  .admin-tab:hover { color: rgba(245,240,232,.75); }
-  .admin-tab.active { color: var(--cream, #F5F0E8); border-bottom-color: var(--cream, #F5F0E8); }
-
   /* Report cards */
   .report-card {
     background: rgba(245,240,232,.04); border: 0.5px solid rgba(245,240,232,.1);
@@ -140,12 +129,6 @@
         <h1 class="page-title" id="page-title">Verificaciones pendientes</h1>
       </div>
 
-      <div class="admin-tabs">
-        <button class="admin-tab active" onclick="switchTab('verifications')">Verificaciones</button>
-        <button class="admin-tab" onclick="switchTab('reports')">Reportes</button>
-        <button class="admin-tab" onclick="switchTab('users')">Usuarios</button>
-      </div>
-
       <div id="content"><div class="loading">Cargando solicitudes…</div></div>
     </div>
   </main>
@@ -169,23 +152,59 @@ const REASON_LABELS = {
   other:         'Otro motivo',
 };
 
+// Sidebar propio de este panel — nunca reutiliza buildSidebar(), que es el
+// sidebar de restaurante (badges de plan/verificación no aplican aquí).
+function buildAdminSidebar(activeTab) {
+  const items = [
+    { tab: 'verifications', label: 'Verificaciones',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 5-3.2 8.5-7 9.9C8.2 20.5 5 17 5 12V6l7-3z"/><path d="M9 12l2 2 4-4.5"/></svg>' },
+    { tab: 'reports', label: 'Reportes',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4"/><path d="M5 4h13l-2.5 4L18 12H5"/></svg>' },
+    { tab: 'users', label: 'Usuarios',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5A4.5 4.5 0 017.5 14h3A4.5 4.5 0 0115 18.5V20"/><circle cx="17" cy="8.5" r="2.4"/><path d="M16 14.3c2 .4 3.6 1.9 3.6 4.2v1.5"/></svg>' },
+  ];
+
+  return `<aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="/business/admin" style="text-decoration:none">
+        <svg width="98" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="18" r="10" fill="#C4622D"/>
+          <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.1" stroke="#F5F0E8" stroke-width="0.8"/>
+          <text x="34" y="24" font-family="'Cormorant Garamond',Georgia,serif" font-size="22" font-weight="300" letter-spacing="-1" fill="#F5F0E8">yumlist</text>
+        </svg>
+      </a>
+    </div>
+    <div class="sidebar-restaurant">Panel Admin</div>
+    <div style="padding:0 20px;margin-bottom:20px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#B89F87">Operaciones</div>
+    <nav class="sidebar-nav">
+      ${items.map(n => `<a href="#" data-tab="${n.tab}" class="sidebar-link${activeTab === n.tab ? ' active' : ''}" onclick="switchTab('${n.tab}');return false;">${n.icon} ${n.label}</a>`).join('')}
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/admin" class="sidebar-link" style="margin-bottom:4px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="20" x2="4" y2="12"/><line x1="10" y1="20" x2="10" y2="6"/><line x1="16" y1="20" x2="16" y2="14"/><line x1="22" y1="20" x2="22" y2="9"/></svg>
+        Ver métricas →
+      </a>
+      <button class="btn-signout" onclick="doSignOut()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>`;
+}
+
 async function init() {
   const session = await requireAdmin();
   if (!session) return; // requireAdmin already handled redirect or denial screen
 
-  document.getElementById('sidebar-mount').innerHTML = buildSidebar(
-    { restaurant_name: 'Admin', status: 'verified', plan: 'premium' },
-    '/business/admin'
-  );
+  document.getElementById('sidebar-mount').innerHTML = buildAdminSidebar('verifications');
 
   await loadPending();
 }
 
 function switchTab(tab) {
   currentTab = tab;
-  const tabOrder = ['verifications', 'reports', 'users'];
-  document.querySelectorAll('.admin-tab').forEach((el, i) =>
-    el.classList.toggle('active', tabOrder[i] === tab));
+  document.querySelectorAll('#sidebar-mount .sidebar-link[data-tab]').forEach(el =>
+    el.classList.toggle('active', el.dataset.tab === tab));
   const titles = {
     verifications: 'Verificaciones pendientes',
     reports: 'Reportes de usuarios',

@@ -17,17 +17,24 @@ async function requireAuth() {
   return session;
 }
 
+// Shared by requireAdmin() and by the login/registro redirect logic, which
+// need to know "is this account an admin" before deciding where to send it.
+async function isAdminUser(userId) {
+  const { data } = await sb
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return !!data;
+}
+
 async function requireAdmin() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.replace('/business/login'); return null; }
 
-  const { data: adminRow } = await sb
-    .from('admin_users')
-    .select('user_id')
-    .eq('user_id', session.user.id)
-    .maybeSingle();
+  const admin = await isAdminUser(session.user.id);
 
-  if (!adminRow) {
+  if (!admin) {
     // Authenticated but not an admin — show denial screen instead of redirecting to login
     document.body.innerHTML = `
       <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;
@@ -76,6 +83,14 @@ async function getBusinessAccount(userId) {
 async function requireBusinessAccount() {
   const session = await requireAuth();
   if (!session) return null; // requireAuth() already redirected to /business/login
+
+  // An admin has no business_accounts row by design — don't bounce them into
+  // the restaurant panel's "complete your registration" flow, send them to
+  // their own panel instead.
+  if (await isAdminUser(session.user.id)) {
+    window.location.replace('/business/admin');
+    return null;
+  }
 
   const account = await getBusinessAccount(session.user.id);
   if (!account) {
@@ -133,6 +148,14 @@ function buildSidebar(account, activePage) {
   const badgeText  = { verified: 'Verificado ✓', rejected: 'Rechazado', pending: 'Pendiente de verificación' }[status] ?? 'Pendiente';
   const planLabel  = { free: 'Free', pro: 'Pro', premium: 'Premium' }[plan] ?? 'Free';
 
+  // Not verified yet (or rejected) → the badge is the way back to
+  // /business/verificacion, visible from every page in the panel, not just
+  // the dashboard's banner.
+  const statusBadgeInner = `<span class="badge ${badgeClass}">${badgeText}</span>`;
+  const statusBadge = status === 'verified'
+    ? statusBadgeInner
+    : `<a href="/business/verificacion" style="text-decoration:none">${statusBadgeInner}</a>`;
+
   const nav = [
     { href: '/business/dashboard', label: 'Dashboard',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' },
@@ -158,7 +181,7 @@ function buildSidebar(account, activePage) {
     </div>
     <div class="sidebar-restaurant">${account?.restaurant_name ?? '—'}</div>
     <div class="sidebar-status">
-      <span class="badge ${badgeClass}">${badgeText}</span>
+      ${statusBadge}
       <span class="badge badge-plan">${planLabel}</span>
     </div>
     <nav class="sidebar-nav">

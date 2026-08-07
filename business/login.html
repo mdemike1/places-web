@@ -54,13 +54,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="business-auth.js"></script>
 <script>
-  // Redirect if already logged in — only to the dashboard if there's an
-  // actual business account, otherwise to registro (avoids a login ⇄
-  // dashboard ⇄ registro bounce for sessions with no business_accounts row).
-  sb.auth.getSession().then(async ({ data: { session } }) => {
-    if (!session) return;
-    const account = await getBusinessAccount(session.user.id);
+  // Admin accounts have no business_accounts row by design — send them
+  // straight to their own panel instead of bouncing through registro.
+  async function routeAfterLogin(userId) {
+    if (await isAdminUser(userId)) {
+      window.location.replace('/business/admin');
+      return;
+    }
+    const account = await getBusinessAccount(userId);
     window.location.replace(account ? '/business/dashboard' : '/business/registro');
+  }
+
+  // Redirect if already logged in.
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) routeAfterLogin(session.user.id);
   });
 
   document.getElementById('login-form').addEventListener('submit', async e => {
@@ -83,7 +90,7 @@
       return;
     }
 
-    window.location.replace('/business/dashboard');
+    routeAfterLogin(data.user.id);
   });
 
 </script>
