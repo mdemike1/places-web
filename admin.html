@@ -126,6 +126,23 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 /* Util */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .tbl-container { margin-bottom: 20px; }
+
+/* Candidate posts modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 500; align-items: flex-start; justify-content: center; padding: 60px 20px; overflow-y: auto; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--charcoal); border: 0.5px solid rgba(245,240,232,.12); border-radius: 14px; max-width: 640px; width: 100%; padding: 28px 28px 20px; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 0.5px solid rgba(245,240,232,.08); }
+.modal-title { font-family: var(--serif); font-size: 22px; font-weight: 300; }
+.modal-sub { font-size: 12px; color: rgba(245,240,232,.4); margin-top: 4px; }
+.modal-close { background: none; border: none; color: rgba(245,240,232,.5); font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 8px; }
+.modal-close:hover { color: var(--cream); }
+.post-card { display: flex; gap: 14px; padding: 14px 0; border-bottom: 0.5px solid rgba(245,240,232,.06); }
+.post-card:last-child { border-bottom: none; }
+.post-photo { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: rgba(245,240,232,.05); }
+.post-photo-placeholder { width: 72px; height: 72px; border-radius: 10px; flex-shrink: 0; background: rgba(245,240,232,.05); display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(245,240,232,.25); text-align: center; }
+.post-meta { font-size: 12px; color: rgba(245,240,232,.4); margin-bottom: 4px; }
+.post-desc { font-size: 13px; color: rgba(245,240,232,.8); line-height: 1.5; margin-bottom: 6px; }
+.post-ratings { display: flex; gap: 10px; font-size: 11px; color: rgba(245,240,232,.5); }
 </style>
 </head>
 <body>
@@ -409,7 +426,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
       </p>
       <div class="tbl-container" id="tbl-zones"></div>
 
-      <div class="section-subtitle">Restaurantes candidatos a contactar (≥5 menciones agrupadas por proximidad, sin negocio registrado a menos de 50m)</div>
+      <div class="section-subtitle">Restaurantes candidatos a contactar (≥3 usuarios distintos agrupados por proximidad, sin negocio registrado a menos de 50m)</div>
       <div class="tbl-container" id="tbl-candidates"></div>
       <div id="contacted-section" style="display:none">
         <div class="section-subtitle">Ya contactados</div>
@@ -432,6 +449,19 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
   </div><!-- .main-inner -->
 </main>
 
+<div class="modal-overlay" id="candidate-modal" onclick="if(event.target===this) closeCandidateModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="candidate-modal-title"></div>
+        <div class="modal-sub" id="candidate-modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeCandidateModal()">&times;</button>
+    </div>
+    <div id="candidate-modal-posts"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -440,6 +470,12 @@ const SUPABASE_URL = 'https://klkksarpfcohfqirxwoe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE';
 const ADMIN_EMAIL  = 'admin@yumlist.app';
 const PLAN_PRICES  = { free: 0, pro: 9.99, premium: 24.99 };
+// Radio de agrupación de "candidatos a contactar" — deliberadamente distinto
+// de los 50m que usa la app (RESTAURANT_PROXIMITY_M) para no partir en dos un
+// restaurante grande y perder el candidato entero. La exclusión de negocios ya
+// registrados sí se queda en 50m (hardcoded más abajo, junto a esa lógica).
+const CANDIDATE_CLUSTER_M = 70;
+const CANDIDATE_MIN_USERS = 3;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -448,6 +484,7 @@ let F = { from: null, to: null, prevFrom: null, prevTo: null, city: null, userId
 let leafletMap = null;
 const charts = {};
 const tables = {};
+let lastCandidates = []; // datos crudos de la última tabla de candidatos, para el modal "Ver posts"
 
 
 
@@ -1366,7 +1403,7 @@ async function loadB2B() {
     sb.from('business_waitlist').select('*',{count:'exact',head:true}),
     sb.from('business_waitlist').select('*',{count:'exact',head:true}).lte('created_at',F.prevTo),
     sb.from('business_accounts').select('id, status, plan, restaurant_name, lat, lng'),
-    sb.from('posts').select('restaurant, lat, lng').not('lat','is',null).not('lng','is',null).not('restaurant','is',null).order('created_at',{ascending:false}).limit(2000),
+    sb.from('posts').select('id, restaurant, address, lat, lng, user_id, created_at, photo_url, selfie_url, description, rating_food, rating_service, rating_price').not('lat','is',null).not('lng','is',null).not('restaurant','is',null).order('created_at',{ascending:false}).limit(2000),
     sb.from('business_waitlist').select('created_at').gte('created_at',F.from).lte('created_at',F.to).order('created_at',{ascending:true}),
     sb.from('business_outreach').select('restaurant_name, contacted_at').order('contacted_at',{ascending:false}),
     sb.from('posts').select('lat,lng').not('lat','is',null).not('lng','is',null).gte('created_at',F.from).lte('created_at',F.to).order('created_at',{ascending:false}).limit(2000),
@@ -1441,43 +1478,73 @@ async function loadB2B() {
   const contactedNames = new Set(outreachData.map(o=>o.restaurant_name.toLowerCase()));
 
   // ── Candidatos ───────────────────────────────────────────────────────────
-  // Agrupa TODOS los posts con restaurante por proximidad (70m — el mismo
-  // radio, con margen, que ya usa el panel de negocio para decidir "esto es
-  // sobre mí"), no por coincidencia exacta de texto. Dentro de cada grupo
-  // resultante, la etiqueta es el nombre normalizado más frecuente; las
-  // demás variantes de texto vistas se muestran entre paréntesis. Se excluye
-  // por PROXIMIDAD a un business_accounts existente (≤50m), no por nombre —
-  // así un negocio ya registrado con un nombre ligeramente distinto al que
-  // usan sus clientes no aparece como candidato a vender.
+  // Agrupa TODOS los posts con restaurante por proximidad (CANDIDATE_CLUSTER_M,
+  // 70m — deliberadamente más ancho que los 50m de la app, para no partir en
+  // dos un restaurante grande y perder el candidato entero), no por
+  // coincidencia exacta de texto. Dentro de cada grupo resultante, la
+  // etiqueta es el nombre normalizado más frecuente y la dirección es la más
+  // frecuente (mismo criterio que el nombre) — así una errata de una sola
+  // persona no decide ni el nombre ni la dirección que se enseña. El umbral
+  // es Nº DE USUARIOS DISTINTOS (CANDIDATE_MIN_USERS), no de posts: si la
+  // misma persona publica 5 veces del mismo sitio eso no son 5 pruebas de
+  // interés, es 1. Se excluye por PROXIMIDAD a un business_accounts existente
+  // (≤50m — ese radio sí se queda como estaba), no por nombre — así un
+  // negocio ya registrado con un nombre ligeramente distinto al que usan sus
+  // clientes no aparece como candidato a vender.
+  //
+  // Nota: contactedNames (justo abajo) excluye por nombre, igual que antes —
+  // mismo tipo de fragilidad que ya se corrigió para business_accounts, pero
+  // no se toca en esta tanda.
   if (postsAllRes.status==='fulfilled' && postsAllRes.value.data) {
     const pts = postsAllRes.value.data.filter(p=>p.lat&&p.lng&&p.restaurant);
-    const candidates = clusterPoints(pts, 70)
-      .filter(cl => cl.count >= 5)
+    const candidates = clusterPoints(pts, CANDIDATE_CLUSTER_M)
+      .filter(cl => new Set(cl.items.map(p=>p.user_id)).size >= CANDIDATE_MIN_USERS)
       .filter(cl => !bizList.some(b=>b.lat&&b.lng&&haversineM(cl.lat,cl.lng,b.lat,b.lng)<=50))
       .map(cl => {
         const nameCounts = {};
+        const addressCounts = {};
         cl.items.forEach(p => {
           const norm = normalizeRestaurantName(p.restaurant);
-          if (!norm) return;
-          if (!nameCounts[norm]) nameCounts[norm] = { count:0, raw:p.restaurant };
-          nameCounts[norm].count++;
+          if (norm) {
+            if (!nameCounts[norm]) nameCounts[norm] = { count:0, raw:p.restaurant };
+            nameCounts[norm].count++;
+          }
+          const addr = p.address?.trim();
+          if (addr) addressCounts[addr] = (addressCounts[addr] || 0) + 1;
         });
-        const sorted = Object.values(nameCounts).sort((a,b)=>b.count-a.count);
+        const sortedNames = Object.values(nameCounts).sort((a,b)=>b.count-a.count);
+        const sortedAddresses = Object.entries(addressCounts).sort((a,b)=>b[1]-a[1]);
+
+        const distinctUsers = new Set(cl.items.map(p=>p.user_id)).size;
+        const lastMention = cl.items.reduce((max,p)=> p.created_at > max ? p.created_at : max, cl.items[0].created_at);
+        const rated = cl.items.filter(p=>p.rating_food!=null && p.rating_service!=null && p.rating_price!=null);
+        const avgRating = rated.length
+          ? rated.reduce((s,p)=>s+(p.rating_food+p.rating_service+p.rating_price)/3, 0) / rated.length
+          : null;
+
         return {
-          name: sorted[0]?.raw ?? '—',
-          altNames: sorted.slice(1).map(n=>n.raw),
-          n: cl.count, lat: cl.lat, lng: cl.lng,
+          name: sortedNames[0]?.raw ?? '—',
+          altNames: sortedNames.slice(1).map(n=>n.raw),
+          address: sortedAddresses[0]?.[0] ?? null,
+          distinctUsers, n: cl.count, lat: cl.lat, lng: cl.lng,
+          lastMention, avgRating, items: cl.items,
         };
       })
       .filter(c => !contactedNames.has(c.name.toLowerCase()))
-      .sort((a,b)=>b.n-a.n).slice(0,100);
+      .sort((a,b)=>b.distinctUsers-a.distinctUsers).slice(0,100);
 
+    lastCandidates = candidates;
     renderTable('candidates',[
       {label:'#',render:(_,i)=>i+1,rank:true},
       {label:'Restaurante',render:r=>r.altNames.length
         ? `${esc(r.name)} <span style="opacity:.4;font-size:11px">(o ${r.altNames.map(esc).join(', ')})</span>`
         : esc(r.name)},
-      {label:'Menciones',key:'n',right:true,render:r=>fmt(r.n)},
+      {label:'Dirección',render:r=>r.address ? esc(r.address) : '<span style="opacity:.35">—</span>'},
+      {label:'Usuarios',key:'distinctUsers',right:true,render:r=>fmt(r.distinctUsers)},
+      {label:'Posts',key:'n',right:true,render:r=>fmt(r.n)},
+      {label:'Última mención',render:r=>r.lastMention ? new Date(r.lastMention).toLocaleDateString('es-ES') : '—'},
+      {label:'Nota',right:true,render:r=>r.avgRating!=null ? fmtDec(r.avgRating,1) : '—'},
+      {label:'',render:(r,i)=>`<button class="outreach-btn" onclick="openCandidatePosts(${i})">Ver posts →</button>`},
       {label:'',render:r=>`<button class="outreach-btn" onclick="markContacted(${JSON.stringify(r.name)})">Contactar</button>`},
     ], candidates);
   }
@@ -1511,6 +1578,50 @@ async function markContacted(name) {
   }
   await loadB2B();
 }
+
+// Sin queries extra: pinta los posts crudos ya cargados para el clustering
+// de candidatos (lastCandidates[i].items), la misma foto/nota que ya vieron
+// en la app.
+function openCandidatePosts(i) {
+  const c = lastCandidates[i];
+  if (!c) return;
+
+  document.getElementById('candidate-modal-title').textContent = c.name;
+  document.getElementById('candidate-modal-sub').textContent =
+    `${c.distinctUsers} usuario${c.distinctUsers===1?'':'s'} distinto${c.distinctUsers===1?'':'s'} · ${c.n} post${c.n===1?'':'s'}`;
+
+  const sorted = [...c.items].sort((a,b)=>b.created_at.localeCompare(a.created_at));
+  document.getElementById('candidate-modal-posts').innerHTML = sorted.map(p => {
+    const photo = p.photo_url || p.selfie_url;
+    const photoHtml = photo
+      ? `<img src="${photo}" class="post-photo" alt="" loading="lazy">`
+      : `<div class="post-photo-placeholder">Sin foto</div>`;
+    const date = new Date(p.created_at).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' });
+    const ratingsHtml = (p.rating_food!=null || p.rating_service!=null || p.rating_price!=null)
+      ? `<div class="post-ratings">
+          ${p.rating_food!=null ? `<span>Comida ${p.rating_food}</span>` : ''}
+          ${p.rating_service!=null ? `<span>Servicio ${p.rating_service}</span>` : ''}
+          ${p.rating_price!=null ? `<span>Precio ${p.rating_price}</span>` : ''}
+        </div>`
+      : '';
+    return `<div class="post-card">
+      ${photoHtml}
+      <div>
+        <div class="post-meta">${date}</div>
+        ${p.description ? `<div class="post-desc">${esc(p.description)}</div>` : ''}
+        ${ratingsHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('candidate-modal').classList.add('open');
+}
+
+function closeCandidateModal() {
+  document.getElementById('candidate-modal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCandidateModal(); });
 
 // ── Mapa ──────────────────────────────────────────────────────────────────────
 function haversineM(la1,lo1,la2,lo2){const R=6371000,dL=(la2-la1)*Math.PI/180,dO=(lo2-lo1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
