@@ -158,7 +158,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
 <script src="business-auth.js"></script>
 <script>
 const ALLERGENS = [
@@ -274,7 +274,6 @@ function render() {
     </p>
 
     <div class="public-link-card" id="public-link-card"></div>
-    <canvas id="qr-canvas" style="display:none"></canvas>
 
     <div class="menu-tabs" id="menu-tabs"></div>
     <div id="menu-panel"></div>
@@ -322,14 +321,23 @@ function copyPublicLink() {
 }
 
 function downloadQR() {
-  const canvas = document.getElementById('qr-canvas');
-  QRCode.toCanvas(canvas, publicMenuUrl(), { width: 640, margin: 2 }, (err) => {
-    if (err) { alert('No se pudo generar el QR: ' + err.message); return; }
+  // Comprobación explícita: si el CDN falla o tarda, esto evita un error mudo
+  // en consola (lo que pasó la vez anterior) y le dice al dueño qué hacer.
+  if (typeof qrcode === 'undefined') {
+    alert('No se pudo cargar el generador de QR (fallo de red con el CDN). Recarga la página y vuelve a intentarlo — si sigue sin funcionar, avísanos.');
+    return;
+  }
+  try {
+    const qr = qrcode(0, 'M'); // 0 = detecta automáticamente el tamaño necesario; M = corrección de errores media
+    qr.addData(publicMenuUrl());
+    qr.make();
     const link = document.createElement('a');
-    link.download = `yumlist-qr-${account.id}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.download = `yumlist-qr-${account.id}.gif`; // qrcode-generator produce GIF (sin canvas), no PNG — perfecto para blanco y negro, sin pérdida
+    link.href = qr.createDataURL(10, 4);
     link.click();
-  });
+  } catch (e) {
+    alert('No se pudo generar el QR: ' + e.message);
+  }
 }
 
 function renderMenuTabs() {
