@@ -86,6 +86,55 @@ async function init() {
     }).length
   );
 
+  // ── Carta digital (página pública / QR) ─────────────────────────────────────
+  // El número de visitantes únicos SÍ se calcula y se muestra en Free —
+  // es el "un número" acordado. El desglose completo es Pro y, como el resto
+  // de esta página, si el plan no lo permite, ni se pide.
+
+  const cartaMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const { data: cartaPageViews } = await sb.from('carta_events')
+    .select('visitor_hash')
+    .eq('business_id', account.id)
+    .eq('event_type', 'page_view')
+    .gte('created_at', cartaMonthStart)
+    .limit(5000);
+  const cartaUniqueVisitors = new Set((cartaPageViews ?? []).map(r => r.visitor_hash)).size;
+
+  let cartaTotalViews = 0, cartaYumlistClicks = 0, cartaAvgDurationSec = null;
+  let cartaMenuBreakdown = [], cartaItemBreakdown = [];
+  if (isPro) {
+    const { data: cartaAllEvents } = await sb.from('carta_events')
+      .select('event_type, metadata')
+      .eq('business_id', account.id)
+      .gte('created_at', cartaMonthStart)
+      .limit(5000);
+    const ce = cartaAllEvents ?? [];
+
+    cartaTotalViews    = ce.filter(e => e.event_type === 'page_view').length;
+    cartaYumlistClicks = ce.filter(e => e.event_type === 'yumlist_click').length;
+
+    const durations = ce
+      .filter(e => e.event_type === 'page_close')
+      .map(e => Number(e.metadata?.duration_seconds))
+      .filter(d => d > 0 && d < 3600); // descarta pestañas dejadas abiertas horas
+    cartaAvgDurationSec = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+
+    const menuCounts = {};
+    ce.filter(e => e.event_type === 'menu_tab_view').forEach(e => {
+      const name = e.metadata?.menu_name ?? 'Carta';
+      menuCounts[name] = (menuCounts[name] ?? 0) + 1;
+    });
+    cartaMenuBreakdown = Object.entries(menuCounts).sort((a, b) => b[1] - a[1]);
+
+    const itemCounts = {};
+    ce.filter(e => e.event_type === 'item_expand').forEach(e => {
+      const name = e.metadata?.item_name ?? '—';
+      itemCounts[name] = (itemCounts[name] ?? 0) + 1;
+    });
+    cartaItemBreakdown = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  }
+
   // ── Pro metrics ───────────────────────────────────────────────────────────
   // Calculado solo si el plan lo permite — nada de esto debe llegar al HTML
   // en una cuenta Free, ni siquiera detrás de un blur.
@@ -206,6 +255,62 @@ async function init() {
         <div class="chart-wrap"><canvas id="monthly-chart"></canvas></div>
       </div>
     </div>
+
+    <!-- FREE: Tu carta digital — un número, con aviso de qué hay en Pro -->
+    <div class="analytics-section">
+      <div class="analytics-section-header">
+        <div class="analytics-section-title">Tu carta digital</div>
+      </div>
+      <div class="analytics-body">
+        <div class="stats-grid" style="margin-bottom:${isPro ? '0' : '10px'}">
+          <div class="stat-card">
+            <div class="stat-label">Visitantes únicos este mes</div>
+            <div class="stat-value">${cartaUniqueVisitors}</div>
+            <div class="stat-sub">personas distintas que abrieron tu carta desde el QR o el enlace</div>
+          </div>
+        </div>
+        ${!isPro ? `
+        <div style="font-size:12px;color:rgba(245,240,232,.4);margin-top:4px">
+          Con el plan Pro verías además qué carta abren, qué platos miran más, cuánto tiempo pasan leyendo y cuántos clics genera el botón hacia la app. <a href="/business/planes" class="auth-link" style="font-size:12px">Ver planes →</a>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <!-- PRO: Desglose de la carta digital -->
+    ${lockedSection('Desglose de tu carta digital', 'pro', isPro ? `
+      <div class="stats-grid" style="margin-bottom:16px">
+        <div class="stat-card">
+          <div class="stat-label">Aperturas totales</div>
+          <div class="stat-value">${cartaTotalViews}</div>
+          <div class="stat-sub">incluye visitas repetidas de la misma persona</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Clics a la app</div>
+          <div class="stat-value">${cartaYumlistClicks}</div>
+          <div class="stat-sub">${cartaUniqueVisitors > 0 ? ((cartaYumlistClicks / cartaUniqueVisitors) * 100).toFixed(1) + '% de los visitantes únicos' : ''}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tiempo medio en la carta</div>
+          <div class="stat-value sm">${cartaAvgDurationSec != null ? Math.round(cartaAvgDurationSec / 60) + ' min' : '—'}</div>
+        </div>
+      </div>
+      <div class="review-tags" style="margin-bottom:10px">
+        ${cartaMenuBreakdown.length > 0
+          ? cartaMenuBreakdown.map(([n, c]) => `<span class="tag">${esc(n)} <span style="opacity:.5">${c}</span></span>`).join('')
+          : '<span style="font-size:13px;color:var(--muted)">Sin aperturas de carta todavía este mes.</span>'}
+      </div>
+      <div class="review-tags">
+        ${cartaItemBreakdown.length > 0
+          ? cartaItemBreakdown.map(([n, c]) => `<span class="tag">${esc(n)} <span style="opacity:.5">${c}</span></span>`).join('')
+          : '<span style="font-size:13px;color:var(--muted)">Sin platos abiertos todavía este mes.</span>'}
+      </div>
+    ` : `
+      <div class="stats-grid" style="margin-bottom:0">
+        <div class="stat-card"><div class="stat-label">Aperturas totales</div><div class="stat-value">—</div></div>
+        <div class="stat-card"><div class="stat-label">Clics a la app</div><div class="stat-value">—</div></div>
+        <div class="stat-card"><div class="stat-label">Tiempo medio en la carta</div><div class="stat-value sm">—</div></div>
+      </div>
+    `)}
 
     <!-- PRO: Nota desglosada -->
     ${lockedSection('Nota desglosada', 'pro', isPro ? `

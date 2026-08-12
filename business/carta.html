@@ -135,6 +135,16 @@
   .item-form-actions { display: flex; gap: 10px; margin-top: 16px; }
 
   .empty-menus { text-align: center; padding: 60px 20px; color: rgba(245,240,232,.35); }
+
+  .public-link-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 18px 22px; margin-bottom: 24px;
+  }
+  .public-link-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,240,232,.4); margin-bottom: 4px; }
+  .public-link-url { font-family: var(--serif); font-size: 17px; color: var(--cream); word-break: break-all; }
+  .public-link-hint { font-size: 12px; color: rgba(245,240,232,.4); margin-top: 4px; max-width: 420px; line-height: 1.5; }
+  .public-link-actions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -148,6 +158,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="business-auth.js"></script>
 <script>
 const ALLERGENS = [
@@ -262,12 +273,63 @@ function render() {
       Crea tantas cartas como necesites (general, mediodía, temporada…), organízalas en secciones y añade tus platos con foto, precio y alérgenos.
     </p>
 
+    <div class="public-link-card" id="public-link-card"></div>
+    <canvas id="qr-canvas" style="display:none"></canvas>
+
     <div class="menu-tabs" id="menu-tabs"></div>
     <div id="menu-panel"></div>
   `;
 
+  renderPublicLinkCard();
   renderMenuTabs();
   renderMenuPanel(activeMenu);
+}
+
+// La URL nunca lleva el nombre del restaurante, solo business_accounts.id — es
+// lo único que no cambia nunca, aunque el restaurante se renombre. El QR
+// impreso en las mesas depende de que esto no se toque jamás.
+function publicMenuUrl() {
+  return `https://yumlist.app/r/${account.id}`;
+}
+
+function renderPublicLinkCard() {
+  const el = document.getElementById('public-link-card');
+  if (!el) return;
+  const url = publicMenuUrl();
+  el.innerHTML = `
+    <div>
+      <div class="public-link-label">Tu página pública</div>
+      <div class="public-link-url">${esc(url.replace('https://', ''))}</div>
+      <div class="public-link-hint">Compártelo o descarga el QR para las mesas. No cambia nunca, aunque renombres el restaurante — pégalo en la mesa con confianza.</div>
+    </div>
+    <div class="public-link-actions">
+      <button class="btn-sm" onclick="copyPublicLink()">Copiar enlace</button>
+      <button class="btn-primary" style="width:auto;padding:10px 20px;margin-top:0" onclick="downloadQR()">Descargar QR</button>
+    </div>
+  `;
+}
+
+function copyPublicLink() {
+  const url = publicMenuUrl();
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url).then(
+      () => alert('Enlace copiado.'),
+      () => prompt('Copia el enlace manualmente:', url)
+    );
+  } else {
+    prompt('Copia el enlace manualmente:', url);
+  }
+}
+
+function downloadQR() {
+  const canvas = document.getElementById('qr-canvas');
+  QRCode.toCanvas(canvas, publicMenuUrl(), { width: 640, margin: 2 }, (err) => {
+    if (err) { alert('No se pudo generar el QR: ' + err.message); return; }
+    const link = document.createElement('a');
+    link.download = `yumlist-qr-${account.id}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
 }
 
 function renderMenuTabs() {

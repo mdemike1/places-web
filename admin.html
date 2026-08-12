@@ -411,6 +411,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
         <div class="stat-card"><div class="stat-label">Verificados</div><div class="stat-value" id="b-verified">—</div><div class="stat-delta" id="b-verified-sub"></div></div>
         <div class="stat-card"><div class="stat-label">De pago</div><div class="stat-value" id="b-paying">—</div><div class="stat-delta" id="b-paying-sub"></div></div>
         <div class="stat-card"><div class="stat-label">MRR estimado</div><div class="stat-value sm" id="b-mrr">—</div><div class="stat-delta" id="b-mrr-sub" style="color:rgba(245,240,232,.35)">Basado en el plan asignado en la base de datos — Stripe no está integrado, no hay cobros reales todavía.</div></div>
+        <div class="stat-card"><div class="stat-label">Clics QR → app</div><div class="stat-value" id="b-carta-clicks">—</div><div class="stat-delta" style="color:rgba(245,240,232,.35)">Clics al botón "ir a la app" en todas las cartas públicas, período seleccionado. El indicador de si el QR capta usuarios o solo sirve cartas.</div></div>
       </div>
       <div class="table-wrap" id="b-plans-wrap" style="margin-bottom:24px">
         <div class="plan-row"><span class="skeleton" style="width:200px;height:16px"></span></div>
@@ -1399,7 +1400,7 @@ async function loadB2B() {
   // el resto del dashboard. Ambos limitados a 2000 filas, el mismo tope que
   // ya usa loadMapa() para esta misma función de clustering O(n²) — más
   // volumen que eso habría que moverlo a una función de Postgres.
-  const [wlRes, pwlRes, bizRes, postsAllRes, wlChartRes, outreachRes, zonePostsRes] = await Promise.allSettled([
+  const [wlRes, pwlRes, bizRes, postsAllRes, wlChartRes, outreachRes, zonePostsRes, cartaClicksRes] = await Promise.allSettled([
     sb.from('business_waitlist').select('*',{count:'exact',head:true}),
     sb.from('business_waitlist').select('*',{count:'exact',head:true}).lte('created_at',F.prevTo),
     sb.from('business_accounts').select('id, status, plan, restaurant_name, lat, lng'),
@@ -1407,6 +1408,12 @@ async function loadB2B() {
     sb.from('business_waitlist').select('created_at').gte('created_at',F.from).lte('created_at',F.to).order('created_at',{ascending:true}),
     sb.from('business_outreach').select('restaurant_name, contacted_at').order('contacted_at',{ascending:false}),
     sb.from('posts').select('lat,lng').not('lat','is',null).not('lng','is',null).gte('created_at',F.from).lte('created_at',F.to).order('created_at',{ascending:false}).limit(2000),
+    // Métrica interna de yumlist, no del negocio: cuántos clics genera el botón
+    // "ir a la app" en TODAS las cartas públicas — el indicador de si el canal
+    // QR capta usuarios o solo sirve cartas. Requiere la policy admin_read_all_events
+    // sobre carta_events (el admin no es dueño de ningún business_id, así que
+    // owner_read_events por sí sola no le deja leer nada de esta tabla).
+    sb.from('carta_events').select('*',{count:'exact',head:true}).eq('event_type','yumlist_click').gte('created_at',F.from).lte('created_at',F.to),
   ]);
 
   const waitlist = wlRes.status==='fulfilled' ? wlRes.value.count : null;
@@ -1432,6 +1439,7 @@ async function loadB2B() {
   set('b-paying', fmt(paying));
   set('b-paying-sub', (paying!==null && verified) ? `${fmtPct(paying/verified*100)} de los verificados` : '');
   set('b-mrr', mrr!==null ? fmtDec(mrr,2)+' €' : '—');
+  set('b-carta-clicks', cartaClicksRes.status==='fulfilled' ? fmt(cartaClicksRes.value.count) : '—');
 
   if (registered!==null) {
     set('b-plans-wrap', [['free','Free',planCounts.free],['pro','Pro',planCounts.pro],['premium','Premium',planCounts.premium]]
