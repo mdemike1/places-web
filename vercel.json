@@ -22,6 +22,7 @@
     { "source": "/business/reviews",      "destination": "/business/reviews.html" },
     { "source": "/business/analytics",    "destination": "/business/analytics.html" },
     { "source": "/business/planes",       "destination": "/business/planes.html" },
+    { "source": "/business/carta",        "destination": "/business/carta.html" },
     { "source": "/admin",                  "destination": "/admin.html" },
     { "source": "/business/admin",        "destination": "/business/admin.html" },
     { "source": "/reset-password",        "destination": "/reset-password.html" },
