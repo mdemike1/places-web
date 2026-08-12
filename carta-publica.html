@@ -283,11 +283,18 @@ async function init() {
 // Portada contenida: foto del local si existe, si no el fondo degradado de
 // marca ya definido en .hero-cover hace de fallback (nunca queda un hueco).
 // El velo (.hero-scrim) garantiza que el nombre se lea con cualquier foto.
+//
+// business_public.photos guarda RUTAS del bucket business-docs (igual que
+// perfil.html), no URLs completas — a diferencia de business_menu_items.photo_url
+// y posts.photo_url, que sí se guardan ya como URL pública absoluta en origen.
+// Hay que pasarlas por getPublicUrl() antes de usarlas en <img src>, o
+// resuelven relativas a la página actual (así se rompió en /r/{id}).
 function heroHtml() {
-  const photo = account.photos?.[0];
+  const path = account.photos?.[0];
+  const photoUrl = path ? sb.storage.from('business-docs').getPublicUrl(path).data.publicUrl : null;
   return `
     <div class="hero-cover">
-      ${photo ? `<img class="hero-photo" src="${esc(photo)}" alt="" loading="lazy">` : ''}
+      ${photoUrl ? `<img class="hero-photo" src="${esc(photoUrl)}" alt="" loading="lazy">` : ''}
       <div class="hero-scrim"></div>
       <div class="hero-name-wrap"><h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1></div>
     </div>`;
