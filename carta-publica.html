@@ -17,15 +17,32 @@
 html { -webkit-text-size-adjust: 100%; }
 body { background: var(--ink); color: var(--cream); font-family: var(--sans); min-height: 100vh; }
 
-.page { max-width: 640px; margin: 0 auto; padding: 32px 20px 60px; }
+.page { max-width: 640px; margin: 0 auto; padding: 18px 20px 60px; }
 .loading { text-align: center; padding: 90px 20px; color: rgba(245,240,232,.4); font-size: 14px; }
 
-.header { margin-bottom: 30px; }
-.hero-photo { width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; margin-bottom: 18px; display: block; }
-.restaurant-name { font-family: var(--serif); font-weight: 300; font-size: 30px; line-height: 1.15; margin-bottom: 8px; }
-.restaurant-desc { font-size: 14px; color: var(--sand); line-height: 1.6; }
+/* Portada — contenida a propósito: en 390px de ancho debe asomar ya el primer
+   plato sin hacer scroll. Ancho completo (sangre), alto corto. Si no hay foto,
+   el propio fondo degradado de la marca hace de portada — nunca un hueco. El
+   velo va hasta casi opaco donde vive el texto, así el nombre se lee siempre,
+   tenga la foto que tenga debajo. */
+.hero-cover {
+  position: relative; height: 150px; overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 85% -20%, rgba(196,98,45,.22), transparent 55%),
+    linear-gradient(165deg, #201d1a, #0e0d0c);
+}
+.hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,12,0) 0%, rgba(14,13,12,.4) 45%, rgba(14,13,12,.95) 100%); }
+.hero-name-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 12px; max-width: 640px; margin: 0 auto; }
+.restaurant-name { font-family: var(--serif); font-weight: 300; font-size: 25px; line-height: 1.15; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,.55); }
+.restaurant-desc { font-size: 13.5px; color: var(--sand); line-height: 1.6; margin: 12px 0 4px; }
 
-.menu-tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 26px; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+@media (min-width: 480px) {
+  .hero-cover { height: 200px; }
+  .restaurant-name { font-size: 32px; }
+}
+
+.menu-tabs { display: flex; gap: 8px; overflow-x: auto; margin: 18px 0 22px; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
 .menu-tab {
   flex-shrink: 0; padding: 9px 18px; border-radius: 100px;
   background: rgba(245,240,232,.05); border: 1px solid rgba(245,240,232,.12);
@@ -34,29 +51,41 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 }
 .menu-tab.active { background: rgba(245,240,232,.12); border-color: rgba(245,240,232,.3); color: var(--cream); }
 
-.menu-section { margin-bottom: 32px; }
-.menu-section:last-child { margin-bottom: 0; }
+.menu-section { margin-top: 26px; margin-bottom: 6px; }
+.menu-section:first-child { margin-top: 20px; }
 .section-name {
-  font-family: var(--serif); font-weight: 300; font-size: 21px;
-  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(245,240,232,.08);
+  font-family: var(--serif); font-weight: 300; font-size: 24px; letter-spacing: -.2px;
+  margin-bottom: 4px; padding-bottom: 10px; border-bottom: 1px solid rgba(245,240,232,.1);
 }
 
-.item-row { padding: 14px 0; border-bottom: 1px solid rgba(245,240,232,.05); }
+.item-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid rgba(245,240,232,.05); }
 .item-row:last-child { border-bottom: none; }
 .item-row.expandable { cursor: pointer; }
-.item-main { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
-.item-name { font-size: 15px; color: var(--cream); }
-.item-price { font-family: var(--serif); font-size: 16px; color: rgba(245,240,232,.8); white-space: nowrap; flex-shrink: 0; }
-.item-allergens { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.item-row.expandable:active { background: rgba(245,240,232,.025); }
+.item-text { flex: 1; min-width: 0; }
+.item-name-price { display: flex; align-items: baseline; gap: 8px; }
+.item-name { font-size: 15.5px; color: var(--cream); }
+.item-leader { flex: 1; min-width: 10px; border-bottom: 1px dotted rgba(245,240,232,.16); margin-bottom: 4px; }
+.item-price { font-family: var(--serif); font-size: 16px; color: rgba(245,240,232,.85); white-space: nowrap; flex-shrink: 0; }
+.item-allergens { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .allergen-chip {
-  font-size: 10.5px; padding: 3px 9px; border-radius: 20px;
-  background: rgba(245,240,232,.07); color: var(--sand); border: 1px solid rgba(245,240,232,.14);
-  white-space: nowrap;
+  font-size: 9.5px; padding: 2px 7px; border-radius: 20px;
+  background: rgba(245,240,232,.05); color: rgba(184,159,135,.85);
+  white-space: nowrap; letter-spacing: .01em;
 }
 .item-detail { margin-top: 10px; }
-.item-photo { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; display: block; }
+.item-photo { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; display: block; }
 .item-desc { font-size: 13px; color: var(--sand); line-height: 1.6; }
-.item-expand-hint { font-size: 11px; color: rgba(245,240,232,.25); margin-top: 6px; }
+
+/* Miniatura o chevron: la señal de que el plato se puede tocar. Sin esto no
+   la toca nadie y item_expand no dispara nunca. */
+.item-thumb-wrap { position: relative; width: 56px; height: 56px; flex-shrink: 0; border-radius: 10px; overflow: hidden; margin-top: 2px; }
+.item-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-thumb-badge {
+  position: absolute; right: 3px; bottom: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(14,13,12,.78); display: flex; align-items: center; justify-content: center; color: #F5F0E8;
+}
+.item-chevron { flex-shrink: 0; color: rgba(245,240,232,.25); font-size: 20px; line-height: 56px; align-self: flex-start; }
 
 .empty-note { text-align: center; padding: 30px 20px; color: rgba(245,240,232,.35); font-size: 13px; }
 .empty-state { text-align: center; padding: 50px 20px; }
@@ -89,8 +118,8 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 </head>
 <body>
 
-<div class="page" id="root">
-  <div class="loading">Cargando carta…</div>
+<div id="root">
+  <div class="page"><div class="loading">Cargando carta…</div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -144,8 +173,20 @@ function yumlistLogo(size) {
   </svg>`;
 }
 
-const params = new URLSearchParams(location.search);
-const businessId = params.get('business');
+// La rewrite de vercel.json reescribe /r/<id> a este archivo SIN cambiar la
+// URL que ve el navegador (la que está impresa en el QR sigue siendo
+// yumlist.app/r/<id>) — por eso el id se lee del pathname, no de un parámetro
+// de query. Se probó interpolar :id en la query del destino de la rewrite y
+// no llegaba; el pathname es la fuente robusta porque no depende de que
+// Vercel reescriba nada dentro del destino, solo de la URL que ya trae el
+// navegador. Se mantiene el fallback por ?business= para abrir el archivo
+// directamente en pruebas locales.
+function getBusinessIdFromUrl() {
+  const match = location.pathname.match(/^\/r\/([^/]+)\/?$/);
+  if (match) return decodeURIComponent(match[1]);
+  return new URLSearchParams(location.search).get('business');
+}
+const businessId = getBusinessIdFromUrl();
 
 let account = null;
 let menus = [], sections = [], items = [];
@@ -239,17 +280,29 @@ async function init() {
   loadNearbyPosts();
 }
 
+// Portada contenida: foto del local si existe, si no el fondo degradado de
+// marca ya definido en .hero-cover hace de fallback (nunca queda un hueco).
+// El velo (.hero-scrim) garantiza que el nombre se lea con cualquier foto.
+function heroHtml() {
+  const photo = account.photos?.[0];
+  return `
+    <div class="hero-cover">
+      ${photo ? `<img class="hero-photo" src="${esc(photo)}" alt="" loading="lazy">` : ''}
+      <div class="hero-scrim"></div>
+      <div class="hero-name-wrap"><h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1></div>
+    </div>`;
+}
+
 function render() {
   const root = document.getElementById('root');
   root.innerHTML = `
-    <div class="header">
-      ${account.photos?.[0] ? `<img class="hero-photo" src="${esc(account.photos[0])}" alt="" loading="lazy">` : ''}
-      <h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1>
+    ${heroHtml()}
+    <div class="page">
       ${account.description ? `<p class="restaurant-desc">${esc(account.description)}</p>` : ''}
+      ${menus.length > 1 ? `<div class="menu-tabs" id="menu-tabs"></div>` : ''}
+      <div id="menu-content"></div>
+      <div id="yumlist-footer"></div>
     </div>
-    ${menus.length > 1 ? `<div class="menu-tabs" id="menu-tabs"></div>` : ''}
-    <div id="menu-content"></div>
-    <div id="yumlist-footer"></div>
   `;
   if (menus.length > 1) renderTabs();
   renderMenuContent();
@@ -297,6 +350,8 @@ function renderMenuContent() {
   wrap.innerHTML = html || `<div class="empty-note">Esta carta todavía no tiene platos.</div>`;
 }
 
+const EXPAND_ICON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`;
+
 function renderItemRow(it) {
   const priceHtml = it.price != null ? `${fmtPrice(it.price)} €` : (it.price_note ? esc(it.price_note) : '');
   const allergensHtml = (it.allergens ?? []).length
@@ -305,19 +360,30 @@ function renderItemRow(it) {
   const expandable = !!(it.description || it.photo_url);
   const isOpen = expandedItemId === it.id;
 
+  // La miniatura (con su insignia de "ampliar") o, si no hay foto pero sí
+  // descripción, un chevron — sin alguna de las dos señales, nadie toca la
+  // fila y item_expand no se dispara nunca. Al abrir, la miniatura se retira
+  // (la foto grande ya vive en item-detail) y queda solo el chevron girado.
+  const affordance = (it.photo_url && !isOpen)
+    ? `<div class="item-thumb-wrap"><img class="item-thumb" src="${esc(it.photo_url)}" alt="" loading="lazy"><span class="item-thumb-badge">${EXPAND_ICON}</span></div>`
+    : (expandable ? `<span class="item-chevron">${isOpen ? '⌃' : '›'}</span>` : '');
+
   return `
     <div class="item-row${expandable ? ' expandable' : ''}" ${expandable ? `onclick="toggleItem('${it.id}')"` : ''}>
-      <div class="item-main">
-        <span class="item-name">${esc(it.name)}</span>
-        <span class="item-price">${priceHtml}</span>
+      <div class="item-text">
+        <div class="item-name-price">
+          <span class="item-name">${esc(it.name)}</span>
+          <span class="item-leader"></span>
+          <span class="item-price">${priceHtml}</span>
+        </div>
+        ${allergensHtml}
+        ${expandable && isOpen ? `
+          <div class="item-detail">
+            ${it.photo_url ? `<img class="item-photo" src="${esc(it.photo_url)}" alt="" loading="lazy">` : ''}
+            ${it.description ? `<p class="item-desc">${esc(it.description)}</p>` : ''}
+          </div>` : ''}
       </div>
-      ${allergensHtml}
-      ${expandable && isOpen ? `
-        <div class="item-detail">
-          ${it.photo_url ? `<img class="item-photo" src="${esc(it.photo_url)}" alt="" loading="lazy">` : ''}
-          ${it.description ? `<p class="item-desc">${esc(it.description)}</p>` : ''}
-        </div>` : ''}
-      ${expandable && !isOpen ? `<div class="item-expand-hint">Toca para ver más</div>` : ''}
+      ${affordance}
     </div>`;
 }
 
@@ -334,24 +400,26 @@ function toggleItem(id) {
 function renderComingSoon() {
   const root = document.getElementById('root');
   root.innerHTML = `
-    <div class="header">
-      <h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1>
+    ${heroHtml()}
+    <div class="page">
+      <div class="empty-state">
+        <div class="empty-state-title">Estamos preparando la carta</div>
+        <p class="empty-state-body">Vuelve pronto — este restaurante todavía está montando su carta digital en yumlist.</p>
+      </div>
+      <div id="yumlist-footer"></div>
     </div>
-    <div class="empty-state">
-      <div class="empty-state-title">Estamos preparando la carta</div>
-      <p class="empty-state-body">Vuelve pronto — este restaurante todavía está montando su carta digital en yumlist.</p>
-    </div>
-    <div id="yumlist-footer"></div>
   `;
   renderYumlistFooter();
 }
 
 function showNotFound() {
   document.getElementById('root').innerHTML = `
-    <div class="not-found">
-      <div class="not-found-logo">${yumlistLogo(130)}</div>
-      <div class="empty-state-title">Restaurante no encontrado</div>
-      <p class="empty-state-body">Este enlace no corresponde a ningún restaurante en yumlist.</p>
+    <div class="page">
+      <div class="not-found">
+        <div class="not-found-logo">${yumlistLogo(130)}</div>
+        <div class="empty-state-title">Restaurante no encontrado</div>
+        <p class="empty-state-body">Este enlace no corresponde a ningún restaurante en yumlist.</p>
+      </div>
     </div>`;
 }
 
@@ -394,7 +462,10 @@ async function loadNearbyPosts() {
 
   if (!data) return;
   const nearby = data.filter(p => p.lat && p.lng && haversineM(account.lat, account.lng, p.lat, p.lng) <= RESTAURANT_PROXIMITY_M);
-  if (nearby.length === 0) return;
+  // Con 1-2 fotos el bloque queda pobre y puede ser una sola foto irrelevante
+  // (un mueble, un detalle sin gracia) — resta credibilidad más de lo que suma.
+  // Umbral de 3 antes de mostrar nada.
+  if (nearby.length < 3) return;
 
   el.innerHTML = `
     <div class="nearby-label">Fotos de gente que ha estado aquí</div>
