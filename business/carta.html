@@ -160,6 +160,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
 <script src="business-auth.js"></script>
+<script src="qr-shared.js"></script>
+<script src="onboarding-shared.js"></script>
 <script>
 const ALLERGENS = [
   { slug: 'gluten',         label: 'Gluten' },
@@ -200,11 +202,19 @@ function emptyFormState() {
   };
 }
 
+let onboarding = false;
+
 async function init() {
-  const auth = await requireBusinessAccount();
+  onboarding = isOnboardingMode();
+  const auth = await requireBusinessAccount(onboarding ? { allowIncomplete: true } : undefined);
   if (!auth) return;
   account = auth.account;
-  document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/carta');
+
+  if (onboarding) {
+    renderOnboardingChrome('sidebar-mount', 'carta');
+  } else {
+    document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/carta');
+  }
 
   await loadMenus();
   if (menus.length > 0) {
@@ -244,6 +254,14 @@ async function loadMenuContent(menuId) {
   items = itemData ?? [];
 }
 
+const ONBOARDING_CARTA_HELP = `
+  <div class="alert alert-info" style="margin-bottom:24px;line-height:1.6;color:#B89F87">
+    Organiza tu carta como la tienes en papel: crea las secciones que uses (entrantes, principales, postres, bebidas…) y añade tus platos dentro.<br><br>
+    Puedes tener varias cartas: la general, el menú del mediodía, la de temporada. Cada una se muestra u oculta cuando tú quieras.<br><br>
+    Los alérgenos son obligatorios por ley. Marcándolos aquí, tu carta cumple la normativa sin que tengas que hacer nada más.<br><br>
+    Empieza con unos pocos platos para ver cómo queda. Puedes seguir añadiendo después.
+  </div>`;
+
 function render() {
   const content = document.getElementById('content');
 
@@ -253,6 +271,7 @@ function render() {
         <div class="page-label">Carta</div>
         <h1 class="page-title">Tu carta</h1>
       </div>
+      ${onboarding ? ONBOARDING_CARTA_HELP : ''}
       <div class="empty-menus">
         <div style="color:#F5F0E8;font-size:15px;margin-bottom:8px;">Todavía no tienes ninguna carta</div>
         <div style="max-width:380px;margin:0 auto 20px;line-height:1.6;">Crea tu primera carta — puede ser la general, un menú del mediodía, o lo que necesites. Luego añades secciones y platos.</div>
@@ -269,9 +288,10 @@ function render() {
       <div class="page-label">Carta</div>
       <h1 class="page-title">Tu carta</h1>
     </div>
+    ${onboarding ? ONBOARDING_CARTA_HELP : `
     <p style="font-size:13px;color:var(--muted);margin-bottom:24px;max-width:560px;line-height:1.6">
       Crea tantas cartas como necesites (general, mediodía, temporada…), organízalas en secciones y añade tus platos con foto, precio y alérgenos.
-    </p>
+    </p>`}
 
     <div class="public-link-card" id="public-link-card"></div>
 
@@ -279,65 +299,9 @@ function render() {
     <div id="menu-panel"></div>
   `;
 
-  renderPublicLinkCard();
+  renderPublicLinkCard('public-link-card', account.id); // qr-shared.js
   renderMenuTabs();
   renderMenuPanel(activeMenu);
-}
-
-// La URL nunca lleva el nombre del restaurante, solo business_accounts.id — es
-// lo único que no cambia nunca, aunque el restaurante se renombre. El QR
-// impreso en las mesas depende de que esto no se toque jamás.
-function publicMenuUrl() {
-  return `https://yumlist.app/r/${account.id}`;
-}
-
-function renderPublicLinkCard() {
-  const el = document.getElementById('public-link-card');
-  if (!el) return;
-  const url = publicMenuUrl();
-  el.innerHTML = `
-    <div>
-      <div class="public-link-label">Tu página pública</div>
-      <div class="public-link-url">${esc(url.replace('https://', ''))}</div>
-      <div class="public-link-hint">Compártelo o descarga el QR para las mesas. No cambia nunca, aunque renombres el restaurante — pégalo en la mesa con confianza.</div>
-    </div>
-    <div class="public-link-actions">
-      <button class="btn-sm" onclick="copyPublicLink()">Copiar enlace</button>
-      <button class="btn-primary" style="width:auto;padding:10px 20px;margin-top:0" onclick="downloadQR()">Descargar QR</button>
-    </div>
-  `;
-}
-
-function copyPublicLink() {
-  const url = publicMenuUrl();
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(url).then(
-      () => alert('Enlace copiado.'),
-      () => prompt('Copia el enlace manualmente:', url)
-    );
-  } else {
-    prompt('Copia el enlace manualmente:', url);
-  }
-}
-
-function downloadQR() {
-  // Comprobación explícita: si el CDN falla o tarda, esto evita un error mudo
-  // en consola (lo que pasó la vez anterior) y le dice al dueño qué hacer.
-  if (typeof qrcode === 'undefined') {
-    alert('No se pudo cargar el generador de QR (fallo de red con el CDN). Recarga la página y vuelve a intentarlo — si sigue sin funcionar, avísanos.');
-    return;
-  }
-  try {
-    const qr = qrcode(0, 'M'); // 0 = detecta automáticamente el tamaño necesario; M = corrección de errores media
-    qr.addData(publicMenuUrl());
-    qr.make();
-    const link = document.createElement('a');
-    link.download = `yumlist-qr-${account.id}.gif`; // qrcode-generator produce GIF (sin canvas), no PNG — perfecto para blanco y negro, sin pérdida
-    link.href = qr.createDataURL(10, 4);
-    link.click();
-  } catch (e) {
-    alert('No se pudo generar el QR: ' + e.message);
-  }
 }
 
 function renderMenuTabs() {
@@ -789,6 +753,17 @@ async function saveItem(sectionId, existingItemId) {
   } else {
     const { error } = await sb.from('business_menu_items').update(payload).eq('id', id);
     if (error) { alert('Error al guardar el plato: ' + error.message); return; }
+  }
+
+  // En onboarding, en cuanto se guarda el primer plato de todo el negocio
+  // (no solo de esta sección), el paso 5 está completo — se pasa a la
+  // pantalla final en vez de quedarse editando la carta.
+  if (isNew && onboarding) {
+    const { count } = await sb.from('business_menu_items').select('*', { count: 'exact', head: true }).eq('business_id', account.id);
+    if ((count ?? 0) === 1) {
+      window.location.href = '/business/onboarding-final';
+      return;
+    }
   }
 
   openForm = null;

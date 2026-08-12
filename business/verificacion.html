@@ -67,9 +67,11 @@
       </a>
     </div>
 
-    <div class="page-label">Paso 2 de 2</div>
+    <div class="page-label" id="page-label">Paso 2 de 2</div>
     <h1 class="auth-title">Verifica tu identidad.</h1>
-    <p class="auth-sub">Necesitamos confirmar que eres el titular del negocio. Solo tardará un momento.</p>
+    <p class="auth-sub">Sube un documento que acredite que el restaurante es tuyo: el CIF, la licencia de actividad o cualquier documento oficial donde aparezca el nombre del negocio.</p>
+    <p class="auth-sub">Lo revisamos a mano en menos de 48 horas. Mientras tanto puedes seguir configurando todo — tu perfil solo será visible públicamente cuando lo aprobemos.</p>
+    <p class="auth-sub">Este documento no lo ve nadie más que nosotros. No aparece en tu perfil ni se comparte.</p>
 
     <!-- Doc options -->
     <p style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Documentos válidos</p>
@@ -94,7 +96,7 @@
       <div class="alert alert-success" style="margin-bottom:24px">
         Documento recibido. Revisaremos tu solicitud en 24–48h y te avisaremos por email.
       </div>
-      <a href="/business/dashboard" class="btn-ghost" style="width:100%;justify-content:center;">Ir al dashboard →</a>
+      <a href="/business/dashboard" class="btn-ghost" style="width:100%;justify-content:center;" id="success-continue-link">Ir al dashboard →</a>
     </div>
 
     <div id="upload-section">
@@ -114,8 +116,9 @@
       <button class="btn-primary" id="upload-btn" style="margin-top:16px" disabled>Enviar documento</button>
     </div>
 
-    <div style="margin-top:20px;text-align:center">
-      <a href="/business/dashboard" class="auth-link" style="font-size:12px">Saltar por ahora e ir al dashboard</a>
+    <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;gap:8px">
+      <a href="/business/dashboard" class="auth-link" style="font-size:12px" id="skip-link">Saltar por ahora e ir al dashboard</a>
+      <a href="/business/ayuda" target="_blank" rel="noopener" class="auth-link" style="font-size:12px;color:rgba(245,240,232,.35)" id="help-link" hidden>Preguntas frecuentes ↗</a>
     </div>
 
   </div>
@@ -123,8 +126,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="business-auth.js"></script>
+<script src="onboarding-shared.js"></script>
 <script>
   let businessId = null;
+  let onboarding = false;
+
+  // En modo onboarding, "ir al dashboard" pasa a ser "seguir con el
+  // onboarding" — el router decide el siguiente paso, nunca se hardcodea aquí.
+  function continueUrl() {
+    return onboarding ? '/business/onboarding' : '/business/dashboard';
+  }
 
   // Muestra el estado de la última solicitud si ya existe, en vez de
   // presentar siempre el formulario en blanco — evita que alguien suba el
@@ -159,7 +170,7 @@
     } else if (existing.status === 'approved') {
       statusBox.innerHTML = `
         <div class="alert alert-success" style="margin-bottom:24px">Tu documentación ya está verificada.</div>
-        <a href="/business/dashboard" class="btn-ghost" style="width:100%;justify-content:center;">Ir al dashboard →</a>`;
+        <a href="${continueUrl()}" class="btn-ghost" style="width:100%;justify-content:center;">${onboarding ? 'Continuar →' : 'Ir al dashboard →'}</a>`;
       statusBox.style.display = 'block';
       uploadSection.style.display = 'none';
     } else if (existing.status === 'rejected') {
@@ -176,9 +187,21 @@
   }
 
   async function init() {
-    const auth = await requireBusinessAccount();
+    onboarding = isOnboardingMode();
+    const auth = await requireBusinessAccount(onboarding ? { allowIncomplete: true } : undefined);
     if (!auth) return;
     businessId = auth.session.user.id;
+
+    if (onboarding) {
+      const idx = ONBOARDING_STEPS.findIndex(s => s.key === 'verificacion');
+      document.getElementById('page-label').textContent = `Paso ${idx + 1} de ${ONBOARDING_STEPS.length}`;
+      const skip = document.getElementById('skip-link');
+      skip.textContent = 'Saltar por ahora';
+      skip.href = continueUrl();
+      document.getElementById('help-link').hidden = false;
+      document.getElementById('success-continue-link').textContent = 'Continuar →';
+      document.getElementById('success-continue-link').href = continueUrl();
+    }
 
     await renderExistingState();
 

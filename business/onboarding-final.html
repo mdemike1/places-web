@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0E0D0C">
+<title>Ya está — Yumlist Negocios</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e0d0c' rx='8'/><circle cx='11' cy='16' r='8' fill='%23C4622D'/><circle cx='19' cy='16' r='8' fill='%23F5F0E8' fill-opacity='0.15'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="business.css">
+<style>
+  .auth-card { max-width: 560px; }
+  .auth-page { align-items: flex-start; padding-top: 56px; padding-bottom: 64px; }
+  .final-body p { margin-bottom: 16px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+  .final-body p:last-child { margin-bottom: 0; }
+
+  .qr-card {
+    background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 20px 22px; margin: 24px 0; display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .public-link-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,240,232,.4); margin-bottom: 4px; }
+  .public-link-url { font-family: var(--serif); font-size: 17px; color: var(--cream); word-break: break-all; }
+  .public-link-hint { font-size: 12px; color: rgba(245,240,232,.4); margin-top: 4px; max-width: 380px; line-height: 1.5; }
+  .public-link-actions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+
+<div class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <a href="/" style="text-decoration:none">
+        <svg width="120" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="18" r="10" fill="#C4622D"/>
+          <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.1" stroke="#F5F0E8" stroke-width="0.8"/>
+          <text x="34" y="24" font-family="'Cormorant Garamond',Georgia,serif" font-size="22" font-weight="300" letter-spacing="-1" fill="#F5F0E8">yumlist</text>
+        </svg>
+      </a>
+    </div>
+
+    <div id="content">
+      <div class="loading">Cargando…</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
+<script src="business-auth.js"></script>
+<script src="qr-shared.js"></script>
+<script>
+// Pasos 6 (QR) + 7 (Final) combinados — el QR no tiene formulario propio, solo
+// enseña lo que carta.html ya sabe generar (qr-shared.js), así que no hay
+// nada que reimplementar aquí salvo el texto de cierre.
+async function init() {
+  const auth = await requireBusinessAccount({ allowIncomplete: true });
+  if (!auth) return;
+  const { account } = auth;
+
+  const pendingVerification = account.status === 'pending' || account.status === 'rejected';
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-label">Tu código QR</div>
+    <h1 class="auth-title" style="font-size:26px">Llévalo a imprimir.</h1>
+    <div class="final-body" style="margin-top:14px">
+      <p>Este es tu código QR. Llévalo a imprimir y pégalo en las mesas: tus clientes lo escanean y ven tu carta al momento, sin descargarse nada y sin publicidad.</p>
+      <p>Este código no cambia nunca, aunque cambies el nombre del restaurante o modifiques la carta entera. Puedes imprimirlo con tranquilidad.</p>
+    </div>
+
+    <div class="qr-card" id="public-link-card"></div>
+
+    <div style="height:8px"></div>
+    <h1 class="auth-title" style="font-size:26px">Ya está</h1>
+    <div class="final-body" style="margin-top:14px">
+      <p>Tu cuenta está configurada. Desde el panel puedes editar tu carta cuando quieras, ver quién habla de tu restaurante y responder a tus clientes.</p>
+      ${pendingVerification ? `<p>Estamos revisando tu documento. En menos de 48 horas te avisamos por correo y tu perfil pasará a ser visible.</p>` : ''}
+      <p>Si te surge cualquier duda, tienes las <a href="/business/ayuda" target="_blank" rel="noopener" class="auth-link">preguntas frecuentes</a> siempre a mano.</p>
+    </div>
+
+    <button class="btn-primary" style="margin-top:20px" onclick="location.href='/business/dashboard'">Ir a mi panel</button>
+  `;
+
+  renderPublicLinkCard('public-link-card', account.id); // qr-shared.js
+}
+
+init();
+</script>
+</body>
+</html>

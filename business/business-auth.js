@@ -75,12 +75,73 @@ async function getBusinessAccount(userId) {
   return data ?? null;
 }
 
+// ── Onboarding ────────────────────────────────────────────────────────────────
+// Deriva en qué paso del onboarding está un negocio a partir de datos que YA
+// existen — no hay ninguna columna "onboarding_step" que se pueda desincronizar.
+//
+// La verificación (business_verification_docs) queda FUERA de "complete" a
+// propósito: no hay forma de derivar "la saltó" de "no ha llegado todavía" (saltar
+// no deja ninguna fila), así que si formara parte de esta condición, quien la
+// salte se quedaría entrando en el onboarding para siempre, en cada sesión, sin
+// poder salir nunca del todo. Su recordatorio permanente ya vive en el badge del
+// sidebar (buildSidebar), que enlaza a /business/verificacion en cualquier
+// momento — no hace falta que el onboarding la fuerce dos veces.
+async function computeOnboardingState(account) {
+  const hasLocalData = !!(account.description && account.description.trim());
+  const hasPhotos    = Array.isArray(account.photos) && account.photos.length > 0;
+
+  // OJO: esto NO se puede derivar de business_public.has_menu — esa vista solo
+  // incluye negocios con status='verified', y durante el onboarding (antes de
+  // que Mike apruebe) el negocio está en 'pending'. Se consulta directo a
+  // business_menu_items con la sesión del propio dueño (RLS: business_id = auth.uid()),
+  // que sí puede leer sus propias filas sin importar el estado de verificación.
+  const { count: itemCount } = await sb
+    .from('business_menu_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('business_id', account.id)
+    .limit(1);
+  const hasMenuItem = (itemCount ?? 0) > 0;
+
+  const complete = hasLocalData && hasPhotos && hasMenuItem;
+
+  let nextStep = null;
+  if (!complete) {
+    if (!hasLocalData || !hasPhotos) {
+      nextStep = 'perfil';
+    } else if (account.status === 'pending' && !(await hasSubmittedVerification(account.id))) {
+      nextStep = 'verificacion';
+    } else {
+      nextStep = 'carta';
+    }
+  }
+
+  return { complete, hasLocalData, hasPhotos, hasMenuItem, nextStep };
+}
+
+async function hasSubmittedVerification(businessId) {
+  const { count } = await sb
+    .from('business_verification_docs')
+    .select('*', { count: 'exact', head: true })
+    .eq('business_id', businessId)
+    .limit(1);
+  return (count ?? 0) > 0;
+}
+
 // Guard for every page under /business/* except /business/admin (which uses
 // requireAdmin) and the auth pages themselves (login/registro have their own
 // "already logged in" checks). Redirects away and never returns a value the
 // caller can render with — no session data or nav should reach the page
 // unless there's a confirmed business_accounts row for it.
-async function requireBusinessAccount() {
+//
+// opts.allowIncomplete: true deja pasar aunque el onboarding no esté completo —
+// lo usan las páginas reutilizadas como paso de onboarding (perfil/verificacion/
+// carta con ?onboarding=1) y la propia /business/onboarding, para no
+// auto-redirigirse a sí mismas en bucle. Todas las demás páginas del panel lo
+// llaman sin argumentos y, sin cambiar nada en ellas, empiezan a mandar a
+// /business/onboarding a cualquier cuenta que no lo tenga terminado.
+async function requireBusinessAccount(opts) {
+  const allowIncomplete = !!(opts && opts.allowIncomplete);
+
   const session = await requireAuth();
   if (!session) return null; // requireAuth() already redirected to /business/login
 
@@ -96,6 +157,14 @@ async function requireBusinessAccount() {
   if (!account) {
     window.location.replace('/business/registro?motivo=sin-cuenta');
     return null;
+  }
+
+  if (!allowIncomplete) {
+    const state = await computeOnboardingState(account);
+    if (!state.complete) {
+      window.location.replace('/business/onboarding');
+      return null;
+    }
   }
 
   return { session, account };

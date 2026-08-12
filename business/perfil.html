@@ -82,17 +82,6 @@
   .char-counter.warn { color: rgba(220,180,80,.8); }
   .char-counter.over { color: var(--clay); }
 
-  .menu-current {
-    font-size: 13px;
-    color: rgba(245,240,232,.5);
-    margin-top: 6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .menu-current a { color: rgba(245,240,232,.6); text-decoration: none; transition: color .2s; }
-  .menu-current a:hover { color: var(--cream); }
-
   .section-sep {
     font-size: 11px;
     letter-spacing: .12em;
@@ -264,18 +253,33 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="business-auth.js"></script>
+<script src="geocode-shared.js"></script>
+<script src="onboarding-shared.js"></script>
 <script>
 let bizAccount   = null;
 let photoPaths   = [];   // current saved photo paths (from DB)
 let newPhotoFiles = [];  // new File objects to upload (max 3 total)
 let removePhotos  = [];  // paths to remove
+let onboarding   = false;
+
+// Coordenadas/ciudad recién geocodificadas al editar la dirección esta sesión.
+// Si el dueño no toca el campo, saveProfile() no las envía y lat/lng/city
+// quedan exactamente como estaban — solo se actualizan cuando hay un
+// geocoding nuevo con éxito.
+let geocodedLat = null, geocodedLng = null, geocodedCity = null, geocodedAddressComponents = null;
 
 async function init() {
-  const auth = await requireBusinessAccount();
+  onboarding = isOnboardingMode();
+  const auth = await requireBusinessAccount(onboarding ? { allowIncomplete: true } : undefined);
   if (!auth) return;
   const { account } = auth;
   bizAccount = account;
-  document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/perfil');
+
+  if (onboarding) {
+    renderOnboardingChrome('sidebar-mount', 'perfil');
+  } else {
+    document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/perfil');
+  }
 
   // Existing photo paths
   photoPaths = Array.isArray(account.photos) ? [...account.photos] : [];
@@ -304,22 +308,32 @@ function renderPage(account) {
 
     <div class="profile-form">
 
-      <!-- Fotos -->
-      <div class="section-sep">Fotos del local</div>
-      <div id="photos-grid" class="photos-grid"></div>
-      <div class="form-hint" style="margin-top:0">Hasta 3 fotos. Se mostrarán en tu perfil público.</div>
-
-      <!-- Descripción -->
+      <!-- Sobre el restaurante -->
       <div class="section-sep">Sobre el restaurante</div>
       <div class="form-group">
         <label class="form-label" for="restaurant_name">Nombre del restaurante</label>
         <input class="form-input" type="text" id="restaurant_name" placeholder="Nombre público del restaurante" value="${esc(account.restaurant_name ?? '')}">
+        <div class="form-hint">El nombre con el que te conoce la gente, tal como aparece en tu puerta.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="direccion">Dirección</label>
+        <input class="form-input" type="text" id="direccion" placeholder="Carrer de la Diputació 123, 08011" value="${esc(account.address ?? '')}" autocomplete="street-address">
+        <div class="form-hint">La dirección completa. La usamos para situarte en el mapa y para relacionar las publicaciones de tus clientes con tu restaurante.</div>
+        <div class="geocode-status" id="geocode-status"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ciudad">Ciudad</label>
+        <input class="form-input" type="text" id="ciudad" placeholder="Barcelona" value="${esc(account.city ?? '')}" autocomplete="address-level2">
+        <div class="form-hint">Nos sirve para agrupar restaurantes por zona.</div>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="descripcion">Descripción</label>
         <textarea class="form-input" id="descripcion" maxlength="300" rows="4"
           placeholder="Cuéntanos qué hace especial a tu restaurante...">${esc(account.description ?? '')}</textarea>
+        <div class="form-hint">Dos o tres líneas sobre tu restaurante: qué se come, qué ambiente hay, qué te hace distinto. Es lo primero que lee alguien que no te conoce.</div>
         <div class="char-counter" id="char-count">${(account.description ?? '').length}/300</div>
       </div>
 
@@ -327,29 +341,31 @@ function renderPage(account) {
         <div class="form-group">
           <label class="form-label" for="tipo_cocina">Tipo de cocina</label>
           <input class="form-input" type="text" id="tipo_cocina" placeholder="Ej: Italiana, Japonesa, Mediterránea…" value="${esc(account.cuisine_type ?? '')}">
+          <div class="form-hint">Cómo describirías tu cocina en una o dos palabras: italiana, mediterránea, asiática, tapas, fusión… Ayuda a que te encuentren quienes buscan ese tipo de comida.</div>
         </div>
         <div class="form-group">
           <label class="form-label" for="horario">Horario</label>
           <input class="form-input" type="text" id="horario" placeholder="Ej: Lun–Vie 13:00–23:00" value="${esc(account.schedule ?? '')}">
+          <div class="form-hint">Cuándo estás abierto. Puede ser sencillo: "Martes a domingo, 13h-16h y 20h-23h". Cerrado los lunes también es información útil.</div>
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="ciudad">Ciudad</label>
-        <input class="form-input" type="text" id="ciudad" placeholder="Barcelona" value="${esc(account.city ?? '')}" autocomplete="address-level2">
-        <div class="form-hint">Se usa para agrupar tu restaurante por ciudad en las estadísticas. Corrígela aquí si no aparece bien.</div>
-      </div>
+      <!-- Fotos -->
+      <div class="section-sep">Fotos del local</div>
+      <div id="photos-grid" class="photos-grid"></div>
+      <div class="form-hint" style="margin-top:0">Sube fotos de tu local y de tus platos (hasta 3). Es lo primero que se ve en tu perfil y en tu carta, así que elige las que mejor representen el sitio. Con luz natural funcionan mejor.</div>
 
       <!-- Online -->
       <div class="section-sep">Presencia online</div>
       <div class="form-group">
         <label class="form-label" for="reservas_url">Enlace a reservas</label>
         <input class="form-input" type="url" id="reservas_url" placeholder="https://…" value="${esc(account.booking_url ?? '')}">
+        <div class="form-hint">Si usas alguna plataforma de reservas, pega aquí el enlace. Si no, déjalo vacío.</div>
       </div>
       <div class="form-group">
         <label class="form-label" for="telefono_publico">Teléfono público</label>
         <input class="form-input" type="tel" id="telefono_publico" placeholder="+34 900 000 000" value="${esc(account.public_phone ?? '')}">
-        <div class="form-hint">Este número se muestra públicamente en tu ficha de restaurante, para que los clientes puedan llamarte. Distinto del teléfono de contacto que diste al registrarte, que no es público. Déjalo vacío si no quieres mostrar ninguno.</div>
+        <div class="form-hint">Este número lo verán tus clientes para llamarte. Es distinto del teléfono con el que te registraste, que no se muestra a nadie. Déjalo vacío si prefieres no mostrar ninguno.</div>
       </div>
       <div class="form-group">
         <label class="form-label" for="instagram">Instagram</label>
@@ -357,25 +373,17 @@ function renderPage(account) {
           <span>@</span>
           <input class="form-input" type="text" id="instagram" placeholder="nombrerestaurante" value="${esc(account.instagram ?? '')}">
         </div>
+        <div class="form-hint">Tu cuenta, sin la arroba. Aparecerá en tu carta pública.</div>
       </div>
 
       <!-- Carta -->
-      <div class="section-sep">Carta / Menú</div>
+      <div class="section-sep">Carta</div>
       <div class="form-group">
-        <label class="form-label" for="menu_file">Subir carta en PDF</label>
-        <input class="form-input" type="file" id="menu_file" accept=".pdf" style="padding:10px 14px;cursor:none">
-        ${account.menu_url
-          ? `<div class="menu-current">
-               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-               <a href="#" onclick="openMenu(); return false">Ver carta actual</a>
-               <button class="btn-sm" onclick="clearMenu()" style="padding:3px 10px;font-size:11px">Eliminar</button>
-             </div>`
-          : '<div class="form-hint">Ningún PDF subido todavía.</div>'
-        }
+        <div class="form-hint" style="margin-top:0">Gestiona secciones, platos, precios y alérgenos en <a href="/business/carta" class="auth-link" style="font-size:inherit">tu carta digital →</a></div>
       </div>
 
       <div style="margin-top:32px;display:flex;align-items:center;gap:16px">
-        <button class="btn-primary" id="save-btn" style="width:auto;padding:13px 36px;margin-top:0" onclick="saveProfile()">Guardar cambios</button>
+        <button class="btn-primary" id="save-btn" style="width:auto;padding:13px 36px;margin-top:0" onclick="saveProfile()">${onboarding ? 'Continuar' : 'Guardar cambios'}</button>
         <div id="save-status" style="font-size:13px;color:rgba(245,240,232,.4)"></div>
       </div>
 
@@ -383,6 +391,13 @@ function renderPage(account) {
   `;
 
   renderPhotos();
+
+  // Re-geocodifica al perder el foco en dirección/ciudad — mismo patrón que
+  // registro.html, misma función compartida (geocode-shared.js).
+  document.getElementById('direccion').addEventListener('blur', runGeocode);
+  document.getElementById('ciudad').addEventListener('blur', () => {
+    if (document.getElementById('direccion').value.trim()) runGeocode();
+  });
 
   // Char counter
   const desc = document.getElementById('descripcion');
@@ -459,23 +474,50 @@ function addPhoto(e) {
   renderPhotos();
 }
 
-async function openMenu() {
-  if (!bizAccount?.menu_url) return;
-  const { data } = await sb.storage.from('business-docs').createSignedUrl(bizAccount.menu_url, 600);
-  if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+// Igual que registro.html, con la misma función compartida — geocodifica al
+// perder el foco y guarda el resultado en las variables de arriba; saveProfile()
+// solo las usa si hubo un geocoding con éxito esta sesión.
+async function runGeocode() {
+  const direccion = document.getElementById('direccion').value.trim();
+  const ciudad    = document.getElementById('ciudad').value.trim();
+  const status    = document.getElementById('geocode-status');
+
+  if (!direccion || !ciudad) return;
+
+  status.textContent = 'Buscando coordenadas...';
+  status.className   = 'geocode-status geocode-loading';
+
+  const result = await geocodeAddress(direccion, ciudad);
+
+  if (result) {
+    geocodedLat = result.lat;
+    geocodedLng = result.lng;
+    geocodedCity = result.city;
+    geocodedAddressComponents = result.addressComponents;
+    status.textContent = `✓ Encontrado: ${result.displayName.split(',').slice(0, 2).join(',')}`;
+    status.className   = 'geocode-status geocode-ok';
+  } else {
+    status.textContent = 'No se encontraron coordenadas nuevas — se mantiene la ubicación anterior.';
+    status.className   = 'geocode-status geocode-err';
+  }
 }
 
-function clearMenu() {
-  if (bizAccount) bizAccount.menu_url = null;
-  document.querySelector('.menu-current')?.remove();
-  document.querySelector('.form-hint')?.remove();
-  const hint = document.createElement('div');
-  hint.className = 'form-hint';
-  hint.textContent = 'Ningún PDF subido todavía.';
-  document.getElementById('menu_file').after(hint);
+// Insiste sin bloquear: si en onboarding faltan los campos núcleo, pide
+// confirmación explícita en vez de dejar "Continuar" deshabilitado — un
+// restaurante atascado que no puede salir se va.
+function confirmIncompleteCoreData() {
+  const description = document.getElementById('descripcion').value.trim();
+  const hasAnyPhoto = photoPaths.filter(p => !removePhotos.includes(p)).length > 0 || newPhotoFiles.length > 0;
+  if (description && hasAnyPhoto) return true;
+  const faltan = [];
+  if (!description) faltan.push('la descripción');
+  if (!hasAnyPhoto) faltan.push('las fotos');
+  return confirm(`Todavía te falta ${faltan.join(' y ')}. Son lo primero que ve alguien que no te conoce — ¿seguro que quieres continuar sin completarlo? Puedes volver a esta página cuando quieras.`);
 }
 
 async function saveProfile() {
+  if (onboarding && !confirmIncompleteCoreData()) return;
+
   const btn    = document.getElementById('save-btn');
   const status = document.getElementById('save-status');
   const alerts = document.getElementById('alerts');
@@ -505,40 +547,27 @@ async function saveProfile() {
   }
   removePhotos = [];
 
-  // 2. Upload menu PDF if provided
-  let menuUrl = bizAccount?.menu_url ?? null;
-  const menuFile = document.getElementById('menu_file')?.files?.[0];
-  if (menuFile) {
-    if (menuFile.size > 20 * 1024 * 1024) {
-      showAlert('El PDF supera los 20 MB.', 'error');
-      btn.disabled = false;
-      status.textContent = '';
-      return;
-    }
-    const menuPath = `${bizAccount.id}/menu.pdf`;
-    const { error } = await sb.storage.from('business-docs').upload(menuPath, menuFile, { upsert: true });
-    if (error) {
-      showAlert(`Error subiendo carta: ${error.message}`, 'error');
-      btn.disabled = false;
-      status.textContent = '';
-      return;
-    }
-    menuUrl = menuPath;
-  }
-
-  // 3. Update business_accounts
+  // 2. Update business_accounts
   const updates = {
     restaurant_name: document.getElementById('restaurant_name').value.trim() || null,
     photos:          photoPaths.filter(p => !removePhotos.includes(p)),
+    address:         document.getElementById('direccion').value.trim() || null,
     description:     document.getElementById('descripcion').value.trim() || null,
     cuisine_type:    document.getElementById('tipo_cocina').value.trim() || null,
     schedule:        document.getElementById('horario').value.trim() || null,
-    city:            document.getElementById('ciudad').value.trim() || null,
+    city:            geocodedCity || document.getElementById('ciudad').value.trim() || null,
     booking_url:     document.getElementById('reservas_url').value.trim() || null,
     public_phone:    document.getElementById('telefono_publico').value.trim() || null,
     instagram:       document.getElementById('instagram').value.trim().replace(/^@/, '') || null,
-    menu_url:        menuUrl,
   };
+
+  // Solo se tocan lat/lng/address_components si hubo un geocoding con éxito
+  // esta sesión — si el dueño no cambió la dirección, no se sobrescriben.
+  if (geocodedLat != null && geocodedLng != null) {
+    updates.lat = geocodedLat;
+    updates.lng = geocodedLng;
+    updates.address_components = geocodedAddressComponents;
+  }
 
   const { error: updateError } = await sb
     .from('business_accounts')
@@ -553,6 +582,12 @@ async function saveProfile() {
   }
 
   Object.assign(bizAccount, updates);
+
+  if (onboarding) {
+    status.textContent = '✓ Guardado';
+    goToNextOnboardingStep();
+    return;
+  }
 
   btn.disabled    = false;
   status.textContent = '✓ Cambios guardados';
@@ -579,8 +614,6 @@ function openPreview() {
   const schedule    = document.getElementById('horario')?.value.trim() || '';
   const booking     = document.getElementById('reservas_url')?.value.trim() || '';
   const instagram   = document.getElementById('instagram')?.value.trim().replace(/^@/, '') || '';
-  const hasNewMenu  = !!(document.getElementById('menu_file')?.files?.[0]);
-  const hasMenu     = hasNewMenu || !!(bizAccount?.menu_url);
   const phone       = document.getElementById('telefono_publico')?.value.trim() || '';
 
   // First available photo
@@ -599,7 +632,7 @@ function openPreview() {
   }
 
   document.getElementById('preview-frame').innerHTML = buildPreviewHTML({
-    name, description, cuisine, schedule, booking, instagram, hasMenu, phone, heroUrl
+    name, description, cuisine, schedule, booking, instagram, phone, heroUrl
   });
 
   const modal = document.getElementById('preview-modal');
@@ -627,7 +660,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closePreview();
 });
 
-function buildPreviewHTML({ name, description, cuisine, schedule, booking, instagram, hasMenu, phone, heroUrl }) {
+function buildPreviewHTML({ name, description, cuisine, schedule, booking, instagram, phone, heroUrl }) {
   const displayName = name || 'Tu restaurante';
 
   // Hero
@@ -660,7 +693,6 @@ function buildPreviewHTML({ name, description, cuisine, schedule, booking, insta
   if (schedule)  rows.push(['HORARIO', esc(schedule)]);
   if (phone)     rows.push(['TELÉFONO', esc(phone)]);
   if (instagram) rows.push(['INSTAGRAM', `@${esc(instagram)}`]);
-  if (hasMenu)   rows.push(['CARTA / MENÚ', 'Ver carta']);
   if (booking)   rows.push(['RESERVAS', 'Reservar mesa']);
 
   const infoSection = (description || rows.length > 0) ? `
