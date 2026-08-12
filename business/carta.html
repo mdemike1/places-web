@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta — Yumlist Negocios</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e0d0c' rx='8'/><circle cx='11' cy='16' r='8' fill='%23C4622D'/><circle cx='19' cy='16' r='8' fill='%23F5F0E8' fill-opacity='0.15'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="business.css">
+<style>
+  .menu-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .menu-tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 100px;
+    background: rgba(245,240,232,.045); border: 1px solid rgba(245,240,232,.12);
+    color: rgba(245,240,232,.6); font-family: var(--sans); font-size: 13px;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .menu-tab:hover { border-color: rgba(245,240,232,.25); color: var(--cream); }
+  .menu-tab.active { background: rgba(196,98,45,.14); border-color: rgba(196,98,45,.4); color: var(--cream); }
+  .menu-tab.hidden-menu { opacity: .5; }
+  .menu-tab-add {
+    padding: 9px 16px; border-radius: 100px; border: 1px dashed rgba(245,240,232,.2);
+    background: none; color: rgba(245,240,232,.4); font-family: var(--sans); font-size: 13px;
+    cursor: pointer; transition: all .15s;
+  }
+  .menu-tab-add:hover { border-color: rgba(245,240,232,.4); color: var(--cream); }
+
+  .menu-panel-head {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--line);
+  }
+  .menu-name-input {
+    background: none; border: none; color: var(--cream); font-family: var(--serif);
+    font-size: 22px; font-weight: 300; outline: none; padding: 2px 4px; border-radius: 6px;
+    min-width: 120px; max-width: 100%;
+  }
+  .menu-name-input:hover, .menu-name-input:focus { background: rgba(245,240,232,.05); }
+  .menu-panel-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .order-btns { display: inline-flex; gap: 2px; }
+  .order-btn {
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    background: rgba(245,240,232,.05); border: 1px solid rgba(245,240,232,.12); border-radius: 6px;
+    color: rgba(245,240,232,.5); cursor: pointer; transition: all .15s; font-size: 12px; padding: 0;
+  }
+  .order-btn:hover:not(:disabled) { background: rgba(245,240,232,.1); color: var(--cream); }
+  .order-btn:disabled { opacity: .25; cursor: default; }
+
+  .toggle { position: relative; display: inline-block; width: 36px; height: 21px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: rgba(245,240,232,.15); border-radius: 20px;
+    cursor: pointer; transition: background .2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute; width: 15px; height: 15px; left: 3px; top: 3px;
+    background: #F5F0E8; border-radius: 50%; transition: transform .2s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--clay); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(15px); }
+  .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(245,240,232,.5); }
+
+  .section-card {
+    background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 18px 20px; margin-bottom: 16px;
+  }
+  .section-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .section-name-input {
+    background: none; border: none; color: var(--cream); font-family: var(--sans); font-weight: 500;
+    font-size: 15px; outline: none; padding: 3px 6px; border-radius: 6px; flex: 1; min-width: 80px;
+  }
+  .section-name-input:hover, .section-name-input:focus { background: rgba(245,240,232,.05); }
+  .section-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+  .item-row {
+    display: flex; align-items: center; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .item-row:last-of-type { border-bottom: none; }
+  .item-thumb, .item-thumb-empty {
+    width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
+    background: rgba(245,240,232,.05);
+  }
+  .item-thumb-empty { display: flex; align-items: center; justify-content: center; color: rgba(245,240,232,.2); font-size: 9px; text-align: center; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .item-name { font-size: 14px; color: var(--cream); }
+  .item-name.unavailable { color: rgba(245,240,232,.35); text-decoration: line-through; }
+  .item-price { font-family: var(--serif); font-size: 15px; color: rgba(245,240,232,.75); white-space: nowrap; }
+  .item-allergens { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .allergen-chip {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: rgba(245,240,232,.06); color: rgba(245,240,232,.45); white-space: nowrap;
+  }
+  .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .icon-btn {
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: rgba(245,240,232,.35); cursor: pointer; border-radius: 6px;
+    transition: all .15s; padding: 0;
+  }
+  .icon-btn:hover { background: rgba(245,240,232,.08); color: var(--cream); }
+  .icon-btn.danger:hover { background: rgba(196,98,45,.14); color: var(--ember); }
+
+  .add-row-btn {
+    display: flex; align-items: center; gap: 6px; padding: 9px 4px; margin-top: 4px;
+    background: none; border: none; color: rgba(245,240,232,.4); font-family: var(--sans);
+    font-size: 13px; cursor: pointer; transition: color .15s;
+  }
+  .add-row-btn:hover { color: var(--cream); }
+
+  .item-form {
+    background: rgba(245,240,232,.03); border: 1px dashed rgba(245,240,232,.15);
+    border-radius: var(--r-sm); padding: 16px; margin: 10px 0;
+  }
+  .price-mode-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .price-mode-tab {
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    background: rgba(245,240,232,.05); border: 1px solid rgba(245,240,232,.12); color: rgba(245,240,232,.5);
+  }
+  .price-mode-tab.active { background: rgba(196,98,45,.14); border-color: rgba(196,98,45,.4); color: var(--cream); }
+
+  .allergen-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .allergen-toggle {
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    background: rgba(245,240,232,.05); border: 1px solid rgba(245,240,232,.12); color: rgba(245,240,232,.55);
+    transition: all .15s; user-select: none;
+  }
+  .allergen-toggle.active { background: rgba(196,98,45,.18); border-color: rgba(196,98,45,.45); color: var(--cream); }
+
+  .item-photo-preview { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .item-photo-preview img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; }
+
+  .item-form-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+  .empty-menus { text-align: center; padding: 60px 20px; color: rgba(245,240,232,.35); }
+</style>
+</head>
+<body>
+
+
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+  <main class="main-content" id="content">
+    <div class="loading">Cargando carta…</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="business-auth.js"></script>
+<script>
+const ALLERGENS = [
+  { slug: 'gluten',         label: 'Gluten' },
+  { slug: 'crustaceos',     label: 'Crustáceos' },
+  { slug: 'huevos',         label: 'Huevos' },
+  { slug: 'pescado',        label: 'Pescado' },
+  { slug: 'cacahuetes',     label: 'Cacahuetes' },
+  { slug: 'soja',           label: 'Soja' },
+  { slug: 'lacteos',        label: 'Lácteos' },
+  { slug: 'frutos_cascara', label: 'Frutos de cáscara' },
+  { slug: 'apio',           label: 'Apio' },
+  { slug: 'mostaza',        label: 'Mostaza' },
+  { slug: 'sesamo',         label: 'Sésamo' },
+  { slug: 'sulfitos',       label: 'Sulfitos' },
+  { slug: 'altramuces',     label: 'Altramuces' },
+  { slug: 'moluscos',       label: 'Moluscos' },
+];
+const ALLERGEN_LABELS = Object.fromEntries(ALLERGENS.map(a => [a.slug, a.label]));
+
+let account = null;
+let menus = [];
+let activeMenuId = null;
+let sections = [];
+let items = [];
+
+// null = ningún formulario abierto; 'new:<sectionId>' al crear; el id del
+// plato al editar uno existente. Los inputs de texto son "uncontrolled"
+// (se leen del DOM solo al guardar) para no perder el foco ni el cursor en
+// cada re-render — el mismo patrón que ya usa perfil.html con sus fotos.
+let openForm = null;
+let formState = emptyFormState();
+
+function emptyFormState() {
+  return {
+    priceMode: 'fixed', allergens: [], available: true,
+    photoFile: null, photoPreviewUrl: null, removePhoto: false, existingPhotoUrl: null,
+    draftName: null, draftDescription: null, draftPrice: null, draftPriceNote: null,
+  };
+}
+
+async function init() {
+  const auth = await requireBusinessAccount();
+  if (!auth) return;
+  account = auth.account;
+  document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/carta');
+
+  await loadMenus();
+  if (menus.length > 0) {
+    activeMenuId = menus[0].id;
+    await loadMenuContent(activeMenuId);
+  }
+  render();
+}
+
+async function loadMenus() {
+  const { data, error } = await sb
+    .from('business_menus')
+    .select('*')
+    .eq('business_id', account.id)
+    .order('sort_order', { ascending: true });
+  if (error) { console.error('[carta] loadMenus:', error.message); menus = []; return; }
+  menus = data ?? [];
+}
+
+async function loadMenuContent(menuId) {
+  const { data: sectionData, error: sErr } = await sb
+    .from('business_menu_sections')
+    .select('*')
+    .eq('menu_id', menuId)
+    .order('sort_order', { ascending: true });
+  if (sErr) { console.error('[carta] loadSections:', sErr.message); sections = []; items = []; return; }
+  sections = sectionData ?? [];
+
+  if (sections.length === 0) { items = []; return; }
+  const sectionIds = sections.map(s => s.id);
+  const { data: itemData, error: iErr } = await sb
+    .from('business_menu_items')
+    .select('*')
+    .in('section_id', sectionIds)
+    .order('sort_order', { ascending: true });
+  if (iErr) { console.error('[carta] loadItems:', iErr.message); items = []; return; }
+  items = itemData ?? [];
+}
+
+function render() {
+  const content = document.getElementById('content');
+
+  if (menus.length === 0) {
+    content.innerHTML = `
+      <div class="page-header">
+        <div class="page-label">Carta</div>
+        <h1 class="page-title">Tu carta</h1>
+      </div>
+      <div class="empty-menus">
+        <div style="color:#F5F0E8;font-size:15px;margin-bottom:8px;">Todavía no tienes ninguna carta</div>
+        <div style="max-width:380px;margin:0 auto 20px;line-height:1.6;">Crea tu primera carta — puede ser la general, un menú del mediodía, o lo que necesites. Luego añades secciones y platos.</div>
+        <button class="btn-primary" style="width:auto;padding:12px 28px" onclick="createMenu()">+ Nueva carta</button>
+      </div>`;
+    return;
+  }
+
+  const activeMenu = menus.find(m => m.id === activeMenuId) ?? menus[0];
+  activeMenuId = activeMenu.id;
+
+  content.innerHTML = `
+    <div class="page-header">
+      <div class="page-label">Carta</div>
+      <h1 class="page-title">Tu carta</h1>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;max-width:560px;line-height:1.6">
+      Crea tantas cartas como necesites (general, mediodía, temporada…), organízalas en secciones y añade tus platos con foto, precio y alérgenos.
+    </p>
+
+    <div class="menu-tabs" id="menu-tabs"></div>
+    <div id="menu-panel"></div>
+  `;
+
+  renderMenuTabs();
+  renderMenuPanel(activeMenu);
+}
+
+function renderMenuTabs() {
+  const wrap = document.getElementById('menu-tabs');
+  wrap.innerHTML = menus.map(m => `
+    <button class="menu-tab${m.id === activeMenuId ? ' active' : ''}${!m.visible ? ' hidden-menu' : ''}" onclick="selectMenu('${m.id}')">
+      ${esc(m.name)}${!m.visible ? ' (oculta)' : ''}
+    </button>
+  `).join('') + `<button class="menu-tab-add" onclick="createMenu()">+ Nueva carta</button>`;
+}
+
+async function selectMenu(id) {
+  if (id === activeMenuId) return;
+  activeMenuId = id;
+  openForm = null;
+  await loadMenuContent(id);
+  render();
+}
+
+async function createMenu() {
+  const name = prompt('Nombre de la carta (ej. "Carta general", "Menú del mediodía"):');
+  if (!name || !name.trim()) return;
+  const maxOrder = menus.reduce((m, x) => Math.max(m, x.sort_order), -1);
+  const { data, error } = await sb.from('business_menus')
+    .insert({ business_id: account.id, name: name.trim(), sort_order: maxOrder + 1 })
+    .select().single();
+  if (error) { alert('Error al crear la carta: ' + error.message); return; }
+  await loadMenus();
+  activeMenuId = data.id;
+  await loadMenuContent(data.id);
+  render();
+}
+
+async function renameMenu(id, newName) {
+  const name = newName.trim();
+  const menu = menus.find(m => m.id === id);
+  if (!name || name === menu.name) { render(); return; }
+  const { error } = await sb.from('business_menus').update({ name }).eq('id', id);
+  if (error) { alert('Error al renombrar: ' + error.message); return; }
+  await loadMenus();
+  render();
+}
+
+async function toggleMenuVisible(id) {
+  const menu = menus.find(m => m.id === id);
+  const { error } = await sb.from('business_menus').update({ visible: !menu.visible }).eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  await loadMenus();
+  render();
+}
+
+async function moveMenu(id, dir) {
+  const idx = menus.findIndex(m => m.id === id);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= menus.length) return;
+  const a = menus[idx], b = menus[swapIdx];
+  await Promise.all([
+    sb.from('business_menus').update({ sort_order: b.sort_order }).eq('id', a.id),
+    sb.from('business_menus').update({ sort_order: a.sort_order }).eq('id', b.id),
+  ]);
+  await loadMenus();
+  render();
+}
+
+async function deleteMenu(id) {
+  const menu = menus.find(m => m.id === id);
+  if (!confirm(`¿Borrar la carta "${menu.name}" y todas sus secciones y platos? Esto no se puede deshacer.`)) return;
+
+  const photosToRemove = (id === activeMenuId ? items : []).map(i => storagePathFromUrl(i.photo_url)).filter(Boolean);
+
+  const { error } = await sb.from('business_menus').delete().eq('id', id);
+  if (error) { alert('Error al borrar: ' + error.message); return; }
+  if (photosToRemove.length) sb.storage.from('business-docs').remove(photosToRemove);
+
+  if (id === activeMenuId) { activeMenuId = null; sections = []; items = []; }
+  await loadMenus();
+  if (!activeMenuId && menus.length) { activeMenuId = menus[0].id; await loadMenuContent(activeMenuId); }
+  render();
+}
+
+function renderMenuPanel(menu) {
+  const panel = document.getElementById('menu-panel');
+  const idx = menus.findIndex(m => m.id === menu.id);
+
+  panel.innerHTML = `
+    <div class="menu-panel-head">
+      <input class="menu-name-input" value="${esc(menu.name)}" id="menu-name-${menu.id}"
+        onblur="renameMenu('${menu.id}', this.value)" onkeydown="if(event.key==='Enter') this.blur()">
+      <div class="menu-panel-actions">
+        <div class="toggle-row">
+          <label class="toggle">
+            <input type="checkbox" ${menu.visible ? 'checked' : ''} onchange="toggleMenuVisible('${menu.id}')">
+            <span class="toggle-slider"></span>
+          </label>
+          Visible
+        </div>
+        <div class="order-btns">
+          <button class="order-btn" ${idx === 0 ? 'disabled' : ''} onclick="moveMenu('${menu.id}', -1)" title="Subir">↑</button>
+          <button class="order-btn" ${idx === menus.length - 1 ? 'disabled' : ''} onclick="moveMenu('${menu.id}', 1)" title="Bajar">↓</button>
+        </div>
+        <button class="icon-btn danger" onclick="deleteMenu('${menu.id}')" title="Borrar carta">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="sections-list"></div>
+  `;
+
+  renderSections();
+}
+
+function renderSections() {
+  const wrap = document.getElementById('sections-list');
+  if (!wrap) return;
+
+  if (sections.length === 0) {
+    wrap.innerHTML = `
+      <div class="empty-menus" style="padding:32px 20px">
+        Esta carta no tiene secciones todavía.
+      </div>
+      <button class="add-row-btn" onclick="createSection()">+ Nueva sección</button>`;
+    return;
+  }
+
+  wrap.innerHTML = sections.map((s, idx) => {
+    const sectionItems = items.filter(i => i.section_id === s.id);
+    return `
+      <div class="section-card">
+        <div class="section-card-head">
+          <input class="section-name-input" value="${esc(s.name)}" id="section-name-${s.id}"
+            onblur="renameSection('${s.id}', this.value)" onkeydown="if(event.key==='Enter') this.blur()">
+          <div class="section-actions">
+            <div class="order-btns">
+              <button class="order-btn" ${idx === 0 ? 'disabled' : ''} onclick="moveSection('${s.id}', -1)" title="Subir">↑</button>
+              <button class="order-btn" ${idx === sections.length - 1 ? 'disabled' : ''} onclick="moveSection('${s.id}', 1)" title="Bajar">↓</button>
+            </div>
+            <button class="icon-btn danger" onclick="deleteSection('${s.id}')" title="Borrar sección">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="items-${s.id}">${renderItemRows(s.id, sectionItems)}</div>
+        ${openForm === 'new:' + s.id ? renderItemForm(s.id, null) : `<button class="add-row-btn" onclick="openItemForm('${s.id}')">+ Nuevo plato</button>`}
+      </div>
+    `;
+  }).join('') + `<button class="add-row-btn" onclick="createSection()">+ Nueva sección</button>`;
+}
+
+function renderItemRows(sectionId, sectionItems) {
+  if (sectionItems.length === 0 && openForm !== 'new:' + sectionId) {
+    return `<div style="font-size:12px;color:rgba(245,240,232,.3);padding:8px 0">Sin platos todavía.</div>`;
+  }
+  return sectionItems.map((it, idx) => {
+    if (openForm === it.id) return renderItemForm(sectionId, it);
+
+    const priceHtml = it.price != null
+      ? `${fmtPrice(it.price)} €`
+      : (it.price_note ? esc(it.price_note) : '<span style="opacity:.3">—</span>');
+    const allergensHtml = (it.allergens ?? []).length
+      ? `<div class="item-allergens">${it.allergens.map(a => `<span class="allergen-chip">${esc(ALLERGEN_LABELS[a] ?? a)}</span>`).join('')}</div>`
+      : '';
+    const thumb = it.photo_url
+      ? `<img class="item-thumb" src="${it.photo_url}" alt="">`
+      : `<div class="item-thumb-empty">Sin foto</div>`;
+
+    return `
+      <div class="item-row">
+        ${thumb}
+        <div class="item-info">
+          <div class="item-name-line">
+            <span class="item-name${it.available ? '' : ' unavailable'}">${esc(it.name)}</span>
+            <span class="item-price">${priceHtml}</span>
+          </div>
+          ${allergensHtml}
+        </div>
+        <div class="item-actions">
+          <label class="toggle" title="Disponible">
+            <input type="checkbox" ${it.available ? 'checked' : ''} onchange="toggleItemAvailable('${it.id}')">
+            <span class="toggle-slider"></span>
+          </label>
+          <div class="order-btns">
+            <button class="order-btn" ${idx === 0 ? 'disabled' : ''} onclick="moveItem('${it.id}', -1)" title="Subir">↑</button>
+            <button class="order-btn" ${idx === sectionItems.length - 1 ? 'disabled' : ''} onclick="moveItem('${it.id}', 1)" title="Bajar">↓</button>
+          </div>
+          <button class="icon-btn" onclick="openItemForm('${sectionId}', '${it.id}')" title="Editar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn danger" onclick="deleteItem('${it.id}')" title="Borrar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Secciones ────────────────────────────────────────────────────────────
+
+async function createSection() {
+  const name = prompt('Nombre de la sección (ej. "Entrantes", "Postres"):');
+  if (!name || !name.trim()) return;
+  const maxOrder = sections.reduce((m, s) => Math.max(m, s.sort_order), -1);
+  const { error } = await sb.from('business_menu_sections')
+    .insert({ menu_id: activeMenuId, business_id: account.id, name: name.trim(), sort_order: maxOrder + 1 });
+  if (error) { alert('Error al crear la sección: ' + error.message); return; }
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+async function renameSection(id, newName) {
+  const name = newName.trim();
+  const section = sections.find(s => s.id === id);
+  if (!name || name === section.name) { render(); return; }
+  const { error } = await sb.from('business_menu_sections').update({ name }).eq('id', id);
+  if (error) { alert('Error al renombrar: ' + error.message); return; }
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+async function moveSection(id, dir) {
+  const idx = sections.findIndex(s => s.id === id);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= sections.length) return;
+  const a = sections[idx], b = sections[swapIdx];
+  await Promise.all([
+    sb.from('business_menu_sections').update({ sort_order: b.sort_order }).eq('id', a.id),
+    sb.from('business_menu_sections').update({ sort_order: a.sort_order }).eq('id', b.id),
+  ]);
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+async function deleteSection(id) {
+  const section = sections.find(s => s.id === id);
+  if (!confirm(`¿Borrar la sección "${section.name}" y todos sus platos? Esto no se puede deshacer.`)) return;
+
+  const photosToRemove = items.filter(i => i.section_id === id).map(i => storagePathFromUrl(i.photo_url)).filter(Boolean);
+
+  const { error } = await sb.from('business_menu_sections').delete().eq('id', id);
+  if (error) { alert('Error al borrar: ' + error.message); return; }
+  if (photosToRemove.length) sb.storage.from('business-docs').remove(photosToRemove);
+
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+// ── Platos ───────────────────────────────────────────────────────────────
+
+function openItemForm(sectionId, itemId) {
+  if (itemId) {
+    const it = items.find(i => i.id === itemId);
+    formState = {
+      ...emptyFormState(),
+      priceMode: it.price != null ? 'fixed' : 'note',
+      allergens: [...(it.allergens ?? [])],
+      available: it.available,
+      existingPhotoUrl: it.photo_url,
+    };
+    openForm = itemId;
+  } else {
+    formState = emptyFormState();
+    openForm = 'new:' + sectionId;
+  }
+  render();
+}
+
+function closeItemForm() {
+  openForm = null;
+  render();
+}
+
+function setPriceMode(mode) {
+  formState.priceMode = mode;
+  refreshOpenForm();
+}
+
+function toggleAllergen(slug) {
+  const i = formState.allergens.indexOf(slug);
+  if (i === -1) formState.allergens.push(slug); else formState.allergens.splice(i, 1);
+  refreshOpenForm();
+}
+
+function onItemPhotoChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) { alert('La foto supera los 8 MB.'); return; }
+  formState.photoFile = file;
+  formState.photoPreviewUrl = URL.createObjectURL(file);
+  formState.removePhoto = false;
+  refreshOpenForm();
+}
+
+function removeItemPhoto() {
+  formState.photoFile = null;
+  formState.photoPreviewUrl = null;
+  formState.removePhoto = true;
+  refreshOpenForm();
+}
+
+// Antes de reconstruir el formulario (al marcar un alérgeno, cambiar de modo
+// de precio o tocar la foto) guarda lo que haya escrito en los campos de
+// texto — si no, renderItemForm() los repintaría vacíos y se perdería lo
+// tecleado a medio formulario.
+function captureDraftFields() {
+  const nameEl  = document.getElementById('item-name');
+  const descEl  = document.getElementById('item-desc');
+  const priceEl = document.getElementById('item-price');
+  const noteEl  = document.getElementById('item-price-note');
+  if (nameEl)  formState.draftName        = nameEl.value;
+  if (descEl)  formState.draftDescription = descEl.value;
+  if (priceEl) formState.draftPrice       = priceEl.value;
+  if (noteEl)  formState.draftPriceNote   = noteEl.value;
+}
+
+// Re-renderiza solo el formulario abierto (no toda la página), para no
+// perder el resto del árbol mientras se edita.
+function refreshOpenForm() {
+  if (!openForm) return;
+  captureDraftFields();
+  if (openForm.startsWith('new:')) {
+    const sectionId = openForm.slice(4);
+    const holder = document.getElementById('items-' + sectionId)?.nextElementSibling;
+    if (holder) holder.outerHTML = renderItemForm(sectionId, null);
+  } else {
+    const it = items.find(i => i.id === openForm);
+    const row = document.getElementById('item-form-' + it.id);
+    if (row) row.outerHTML = renderItemForm(it.section_id, it);
+  }
+}
+
+function renderItemForm(sectionId, existingItem) {
+  const isNew = !existingItem;
+  const nameVal  = formState.draftName        ?? existingItem?.name ?? '';
+  const descVal  = formState.draftDescription ?? existingItem?.description ?? '';
+  const priceVal = formState.draftPrice       ?? existingItem?.price ?? '';
+  const noteVal  = formState.draftPriceNote   ?? existingItem?.price_note ?? '';
+
+  const photoPreview = formState.photoPreviewUrl
+    ? formState.photoPreviewUrl
+    : (!formState.removePhoto && formState.existingPhotoUrl ? formState.existingPhotoUrl : null);
+
+  return `
+    <div class="item-form" id="item-form-${isNew ? 'new' : existingItem.id}">
+      <div class="form-group">
+        <label class="form-label">Nombre del plato</label>
+        <input class="form-input" id="item-name" value="${esc(nameVal)}" placeholder="Ej. Croquetas de jamón">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción (opcional)</label>
+        <textarea class="form-input" id="item-desc" rows="2" placeholder="Ingredientes, elaboración...">${esc(descVal)}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Precio</label>
+        <div class="price-mode-tabs">
+          <div class="price-mode-tab${formState.priceMode === 'fixed' ? ' active' : ''}" onclick="setPriceMode('fixed')">Precio fijo</div>
+          <div class="price-mode-tab${formState.priceMode === 'note' ? ' active' : ''}" onclick="setPriceMode('note')">Texto (s/m)</div>
+        </div>
+        ${formState.priceMode === 'fixed'
+          ? `<input class="form-input" id="item-price" type="number" step="0.01" min="0" value="${esc(priceVal)}" placeholder="12.50">`
+          : `<input class="form-input" id="item-price-note" value="${esc(noteVal)}" placeholder="s/m, según mercado...">`
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Foto (opcional)</label>
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/heic" onchange="onItemPhotoChange(event)">
+        ${photoPreview ? `
+          <div class="item-photo-preview">
+            <img src="${photoPreview}" alt="">
+            <button class="btn-sm" onclick="removeItemPhoto()">Quitar foto</button>
+          </div>` : ''}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Alérgenos</label>
+        <div class="allergen-grid">
+          ${ALLERGENS.map(a => `
+            <div class="allergen-toggle${formState.allergens.includes(a.slug) ? ' active' : ''}" onclick="toggleAllergen('${a.slug}')">${a.label}</div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="toggle-row" style="margin-top:4px">
+        <label class="toggle">
+          <input type="checkbox" id="item-available" ${formState.available ? 'checked' : ''} onchange="formState.available = this.checked">
+          <span class="toggle-slider"></span>
+        </label>
+        Disponible
+      </div>
+
+      <div class="item-form-actions">
+        <button class="btn-primary" style="width:auto;padding:11px 26px;margin-top:0" onclick="saveItem('${sectionId}', ${isNew ? 'null' : `'${existingItem.id}'`})">Guardar plato</button>
+        <button class="btn-sm" onclick="closeItemForm()">Cancelar</button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveItem(sectionId, existingItemId) {
+  const name = document.getElementById('item-name').value.trim();
+  if (!name) { alert('El plato necesita un nombre.'); return; }
+  const description = document.getElementById('item-desc').value.trim() || null;
+
+  let price = null, price_note = null;
+  if (formState.priceMode === 'fixed') {
+    const v = document.getElementById('item-price').value.trim();
+    price = v ? parseFloat(v) : null;
+  } else {
+    const v = document.getElementById('item-price-note').value.trim();
+    price_note = v || null;
+  }
+
+  const isNew = !existingItemId;
+  const id = existingItemId || crypto.randomUUID();
+
+  let photo_url = formState.removePhoto ? null : (formState.existingPhotoUrl ?? null);
+  if (formState.photoFile) {
+    const ext = formState.photoFile.name.split('.').pop().toLowerCase();
+    const path = `${account.id}/carta/${id}.${ext}`;
+    const { error: upErr } = await sb.storage.from('business-docs').upload(path, formState.photoFile, { upsert: true });
+    if (upErr) { alert('Error al subir la foto: ' + upErr.message); return; }
+
+    // Borra la foto anterior SOLO si la extensión cambió (ruta distinta) — si es
+    // la misma ruta, upsert:true ya la sobrescribió; borrar aquí sin comprobarlo
+    // podría borrar la que se acaba de subir si la petición de borrado tarda
+    // más que la de subida (no se espera una a la otra a propósito).
+    const oldPath = storagePathFromUrl(formState.existingPhotoUrl);
+    if (oldPath && oldPath !== path) sb.storage.from('business-docs').remove([oldPath]);
+
+    const { data: pub } = sb.storage.from('business-docs').getPublicUrl(path);
+    photo_url = pub.publicUrl;
+  } else if (formState.removePhoto) {
+    const oldPath = storagePathFromUrl(formState.existingPhotoUrl);
+    if (oldPath) sb.storage.from('business-docs').remove([oldPath]);
+  }
+
+  const payload = {
+    section_id: sectionId, business_id: account.id, name, description, price, price_note,
+    photo_url, allergens: [...formState.allergens], available: formState.available,
+  };
+
+  if (isNew) {
+    const maxOrder = items.filter(i => i.section_id === sectionId).reduce((m, i) => Math.max(m, i.sort_order), -1);
+    payload.id = id;
+    payload.sort_order = maxOrder + 1;
+    const { error } = await sb.from('business_menu_items').insert(payload);
+    if (error) { alert('Error al guardar el plato: ' + error.message); return; }
+  } else {
+    const { error } = await sb.from('business_menu_items').update(payload).eq('id', id);
+    if (error) { alert('Error al guardar el plato: ' + error.message); return; }
+  }
+
+  openForm = null;
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+async function toggleItemAvailable(id) {
+  const it = items.find(i => i.id === id);
+  const { error } = await sb.from('business_menu_items').update({ available: !it.available }).eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+async function moveItem(id, dir) {
+  const it = items.find(i => i.id === id);
+  const siblings = items.filter(i => i.section_id === it.section_id);
+  const idx = siblings.findIndex(i => i.id === id);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= siblings.length) return;
+  const a = siblings[idx], b = siblings[swapIdx];
+  await Promise.all([
+    sb.from('business_menu_items').update({ sort_order: b.sort_order }).eq('id', a.id),
+    sb.from('business_menu_items').update({ sort_order: a.sort_order }).eq('id', b.id),
+  ]);
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+async function deleteItem(id) {
+  const it = items.find(i => i.id === id);
+  if (!confirm(`¿Borrar "${it.name}"?`)) return;
+  const oldPath = storagePathFromUrl(it.photo_url);
+  const { error } = await sb.from('business_menu_items').delete().eq('id', id);
+  if (error) { alert('Error al borrar: ' + error.message); return; }
+  if (oldPath) sb.storage.from('business-docs').remove([oldPath]);
+  if (openForm === id) openForm = null;
+  await loadMenuContent(activeMenuId);
+  render();
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────
+
+function storagePathFromUrl(url) {
+  if (!url) return null;
+  const marker = '/business-docs/';
+  const i = url.indexOf(marker);
+  return i === -1 ? null : url.slice(i + marker.length);
+}
+
+function fmtPrice(n) {
+  return Number(n).toFixed(2).replace('.', ',');
+}
+
+init();
+</script>
+</body>
+</html>
