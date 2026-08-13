@@ -182,7 +182,6 @@ async function init() {
   } else {
     document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/carta');
     mountTourRelaunchButton(account);
-    maybeAutoStartTour(account);
   }
 
   await loadMenus();
@@ -191,6 +190,8 @@ async function init() {
     await loadMenuContent(activeMenuId);
   }
   render();
+
+  if (!onboarding) initTourForPage(account);
 }
 
 async function loadMenus() {
@@ -236,7 +237,7 @@ function render() {
 
   if (menus.length === 0) {
     content.innerHTML = `
-      <div class="page-header">
+      <div class="page-header" data-tour="carta-intro">
         <div class="page-label">Carta</div>
         <h1 class="page-title">Tu carta</h1>
       </div>
@@ -253,7 +254,7 @@ function render() {
   activeMenuId = activeMenu.id;
 
   content.innerHTML = `
-    <div class="page-header">
+    <div class="page-header" data-tour="carta-intro">
       <div class="page-label">Carta</div>
       <h1 class="page-title">Tu carta</h1>
     </div>
@@ -262,7 +263,7 @@ function render() {
       Crea tantas cartas como necesites (general, mediodía, temporada…), organízalas en secciones y añade tus platos con foto, precio y alérgenos.
     </p>`}
 
-    <div class="public-link-card" id="public-link-card"></div>
+    <div class="public-link-card" id="public-link-card" data-tour="carta-publico"></div>
 
     <div class="menu-tabs" id="menu-tabs"></div>
     <div id="menu-panel"></div>
@@ -279,7 +280,7 @@ function renderMenuTabs() {
     <button class="menu-tab${m.id === activeMenuId ? ' active' : ''}${!m.visible ? ' hidden-menu' : ''}" onclick="selectMenu('${m.id}')">
       ${esc(m.name)}${!m.visible ? ' (oculta)' : ''}
     </button>
-  `).join('') + `<button class="menu-tab-add" onclick="createMenu()">+ Nueva carta</button>`;
+  `).join('') + `<button class="menu-tab-add" data-tour="carta-crear" onclick="createMenu()">+ Nueva carta</button>`;
 }
 
 async function selectMenu(id) {

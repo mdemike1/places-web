@@ -32,7 +32,6 @@ async function init() {
   currentAccount = account;
   document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/reviews');
   mountTourRelaunchButton(account);
-  maybeAutoStartTour(account);
 
   const canRespond = (account?.plan === 'pro' || account?.plan === 'premium') && account?.status === 'verified';
 
@@ -53,15 +52,16 @@ async function init() {
 
   if (posts.length === 0) {
     content.innerHTML = `
-      <div class="page-header">
+      <div class="page-header" data-tour="reviews-intro">
         <div class="page-label">Reviews</div>
         <h1 class="page-title">Todas las menciones</h1>
       </div>
-      <div class="empty">
+      <div class="empty" data-tour="reviews-lista">
         <div style="color:#F5F0E8;font-size:15px;margin-bottom:8px;">Aún no tienes reviews</div>
         <div style="color:#B89F87;max-width:380px;margin:0 auto;line-height:1.6;">Nadie ha publicado sobre tu restaurante en yumlist todavía. En cuanto lo hagan, aparecerán aquí — no hace falta que hagas nada, solo esperar a los primeros.</div>
       </div>
     `;
+    initTourForPage(account);
     return;
   }
 
@@ -126,14 +126,15 @@ async function init() {
   }).join('');
 
   content.innerHTML = `
-    <div class="page-header">
+    <div class="page-header" data-tour="reviews-intro">
       <div class="page-label">Reviews</div>
       <h1 class="page-title">Todas las menciones <span style="font-family:var(--sans);font-size:18px;font-weight:300;color:var(--muted);letter-spacing:0">(${posts.length})</span></h1>
     </div>
     ${(!canRespond && account?.status === 'verified') ? `<div class="alert alert-info" style="margin-bottom:24px">Para responder a las reviews necesitas el plan Pro o Premium. <a href="/business/planes" class="auth-link">Ver planes →</a></div>` : ''}
-    <div class="reviews-list">${reviewsHtml}</div>
+    <div class="reviews-list" data-tour="reviews-lista">${reviewsHtml}</div>
   `;
 
+  initTourForPage(account);
 }
 
 function openResponseForm(postId) {

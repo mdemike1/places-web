@@ -30,7 +30,6 @@ async function init() {
 
   document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/dashboard');
   mountTourRelaunchButton(account);
-  maybeAutoStartTour(account);
 
   const content = document.getElementById('content');
 
@@ -116,12 +115,12 @@ async function init() {
 
   content.innerHTML = `
     ${pendingBanner}
-    <div class="page-header">
+    <div class="page-header" data-tour="dashboard-intro">
       <div class="page-label">Panel principal</div>
       <h1 class="page-title">${account?.restaurant_name ?? 'Tu restaurante'}</h1>
     </div>
 
-    <div class="stats-grid">
+    <div class="stats-grid" data-tour="dashboard-stats">
       <div class="stat-card">
         <div class="stat-label">Menciones este mes</div>
         <div class="stat-value">${postsThisMonth.length}</div>
@@ -151,13 +150,14 @@ async function init() {
     <div class="section-divider"></div>
 
     <div class="section-title">Últimas menciones</div>
-    <div class="reviews-list">${recentHtml}</div>
+    <div class="reviews-list" data-tour="dashboard-menciones">${recentHtml}</div>
 
     ${posts.length > 3 ? `<div style="margin-top:20px;text-align:center">
       <a href="/business/reviews" class="btn-ghost">Ver todas las reviews →</a>
     </div>` : ''}
   `;
 
+  initTourForPage(account);
 }
 
 init();

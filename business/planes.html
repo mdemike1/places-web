@@ -38,7 +38,6 @@ async function init() {
   const { account } = auth;
   document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/planes');
   mountTourRelaunchButton(account);
-  maybeAutoStartTour(account);
 
   const plan = account?.plan ?? 'free';
 
@@ -108,7 +107,7 @@ async function init() {
   }).join('');
 
   document.getElementById('content').innerHTML = `
-    <div class="page-header">
+    <div class="page-header" data-tour="planes-intro">
       <div class="page-label">Planes</div>
       <h1 class="page-title">Elige tu plan</h1>
     </div>
@@ -118,6 +117,7 @@ async function init() {
     <div class="plans-grid">${plansHtml}</div>
   `;
 
+  initTourForPage(account);
 }
 
 function showModal()  { document.getElementById('modal-backdrop').classList.remove('hidden'); }

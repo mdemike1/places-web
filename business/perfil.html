@@ -346,7 +346,6 @@ async function init() {
   } else {
     document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/perfil');
     mountTourRelaunchButton(account);
-    maybeAutoStartTour(account);
   }
 
   // Existing photo paths
@@ -354,12 +353,14 @@ async function init() {
   hoursState = initHoursState(account);
 
   renderPage(account);
+
+  if (!onboarding) initTourForPage(account);
 }
 
 function renderPage(account) {
   const content = document.getElementById('content');
   content.innerHTML = `
-    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
+    <div class="page-header" data-tour="perfil-intro" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
       <div>
         <div class="page-label">Configuración</div>
         <h1 class="page-title" style="margin-bottom:0">Mi perfil</h1>

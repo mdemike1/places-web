@@ -728,27 +728,35 @@ textarea.form-input { resize: vertical; min-height: 90px; }
 .modal-body  { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 26px; }
 
 /* ─── Tour guiado del panel ──────────────────────────── */
-/* .sidebar tiene su propio z-index (50 en escritorio, 80 en móvil), lo que
-   crea un contexto de apilamiento propio: subir el z-index de un .sidebar-link
-   NO basta para que asome por encima de #tour-overlay si el .sidebar en sí
-   se queda por debajo. Por eso, mientras el tour está activo, se sube el
-   .sidebar entero (que ya se ve normal, sin oscurecer) y solo se resalta con
-   un anillo el enlace de la parada actual. */
-body.tour-active .sidebar { z-index: 401; }
+/* El "agujero" en el velo oscuro no se hace subiendo el z-index del elemento
+   señalado — probamos eso primero y se rompe en cuanto el elemento (o
+   cualquier antepasado suyo) tiene su propio contexto de apilamiento, como
+   ya pasaba con .sidebar. En vez de eso, .tour-spot es un único recuadro
+   fijo, posicionado con getBoundingClientRect() sobre el elemento real, cuyo
+   box-shadow de 9999px hace de velo oscuro en todo lo demás. No depende de
+   quién sea el padre del elemento señalado — funciona igual para un enlace
+   del sidebar que para una tarjeta suelta del contenido.
+   .tour-blocker es un capa transparente a pantalla completa que bloquea
+   clics en el fondo (el box-shadow es solo visual, no intercepta clics). */
+@keyframes tourFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.tour-overlay {
+.tour-blocker {
   position: fixed; inset: 0;
-  background: rgba(8,7,6,.72);
-  z-index: 400;
-  animation: up .25s ease both;
+  z-index: 399;
+  background: transparent;
+  animation: tourFadeIn .2s ease both;
 }
 
-.tour-spotlight {
-  background: rgba(196,98,45,.16) !important;
-  color: var(--cream) !important;
-  box-shadow: 0 0 0 3px rgba(196,98,45,.45), 0 0 26px 3px rgba(196,98,45,.3);
+.tour-spot {
+  position: fixed;
+  z-index: 400;
+  border-radius: var(--r-sm);
+  box-shadow:
+    0 0 0 9999px rgba(8,7,6,.72),
+    0 0 0 3px rgba(196,98,45,.5),
+    0 0 26px 4px rgba(196,98,45,.3);
+  pointer-events: none;
 }
-.tour-spotlight svg { opacity: 1 !important; color: var(--ember); }
 
 .tour-tooltip {
   position: fixed;
