@@ -42,6 +42,22 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
   .restaurant-name { font-size: 32px; }
 }
 
+/* Horario — justo bajo la portada, lo primero de .page. Sin punto de color
+   cuando solo hay texto libre (schedule): no podemos afirmar "abierto/cerrado"
+   de un texto sin estructura sin arriesgarnos a mentir. */
+.hours-section { margin-bottom: 6px; }
+.hours-toggle { display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 11px 0; user-select: none; }
+.hours-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.hours-dot.open { background: #4CAF50; box-shadow: 0 0 6px rgba(76,175,80,.45); }
+.hours-dot.closed { background: rgba(245,240,232,.28); }
+.hours-status-text { font-size: 13.5px; color: var(--cream); flex: 1; }
+.hours-chevron { color: rgba(245,240,232,.35); font-size: 11px; transition: transform .2s; }
+.hours-chevron.open { transform: rotate(180deg); }
+.hours-fallback { font-size: 13.5px; color: var(--sand); padding: 11px 0; }
+.hours-week { padding: 2px 0 10px; border-top: 1px solid rgba(245,240,232,.08); }
+.hours-week-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 13px; color: rgba(245,240,232,.55); }
+.hours-week-row.hours-today { color: var(--cream); font-weight: 500; }
+
 .menu-tabs { display: flex; gap: 8px; overflow-x: auto; margin: 18px 0 22px; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
 .menu-tab {
   flex-shrink: 0; padding: 9px 18px; border-radius: 100px;
@@ -164,6 +180,111 @@ function haversineM(la1, lo1, la2, lo2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// ── Horario ──────────────────────────────────────────────────────────────
+const DAYS_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' };
+const WEEKDAY_TO_KEY = { Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun' };
+
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Hora y día locales del NEGOCIO (su huso horario guardado), no los del
+// visitante — misma técnica verificada contra Hermes en la tanda de la app:
+// Intl.DateTimeFormat con timeZone gestiona el cambio de hora solo, sin
+// aritmética manual de desplazamientos.
+function getLocalDayAndTime(timezone) {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date());
+  const weekday = parts.find(p => p.type === 'weekday').value;
+  let hour = parts.find(p => p.type === 'hour').value;
+  const minute = parts.find(p => p.type === 'minute').value;
+  if (hour === '24') hour = '00'; // quirk conocido de Intl a medianoche exacta
+  return { dayKey: WEEKDAY_TO_KEY[weekday], minutes: parseInt(hour, 10) * 60 + parseInt(minute, 10) };
+}
+
+// Devuelve { open: bool, until } si está abierto ahora, o { open: false, next }
+// con la próxima apertura (hoy más tarde, mañana, o hasta 7 días vista).
+function computeOpenStatus(hours) {
+  const { dayKey, minutes } = getLocalDayAndTime(hours.timezone);
+  const todayIdx = DAYS_ORDER.indexOf(dayKey);
+  const yesterdayKey = DAYS_ORDER[(todayIdx + 6) % 7];
+
+  // Un turno de ayer que cruza medianoche puede seguir vivo ahora mismo.
+  for (const s of (hours.days[yesterdayKey] || [])) {
+    const open = toMinutes(s.open), close = toMinutes(s.close);
+    if (close <= open && minutes < close) return { open: true, until: s.close };
+  }
+
+  const todayShifts = hours.days[dayKey] || [];
+  for (const s of todayShifts) {
+    const open = toMinutes(s.open), close = toMinutes(s.close);
+    const crossesMidnight = close <= open;
+    const effectiveClose = crossesMidnight ? close + 24 * 60 : close;
+    if (minutes >= open && minutes < effectiveClose) return { open: true, until: s.close };
+  }
+
+  const laterToday = todayShifts
+    .filter(s => toMinutes(s.open) > minutes)
+    .sort((a, b) => toMinutes(a.open) - toMinutes(b.open))[0];
+  if (laterToday) return { open: false, next: `hoy a las ${laterToday.open}` };
+
+  for (let i = 1; i <= 7; i++) {
+    const key = DAYS_ORDER[(todayIdx + i) % 7];
+    const shifts = (hours.days[key] || []).slice().sort((a, b) => toMinutes(a.open) - toMinutes(b.open));
+    if (shifts.length) {
+      const when = i === 1 ? 'mañana' : DAY_LABELS[key].toLowerCase();
+      return { open: false, next: `${when} a las ${shifts[0].open}` };
+    }
+  }
+  return { open: false, next: null }; // cerrado toda la semana
+}
+
+function renderHoursSection() {
+  const el = document.getElementById('hours-section');
+  if (!el) return;
+
+  // Convivencia: sin hours estructurado, se cae al texto libre — sin punto de
+  // color ni "abierto/cerrado", porque no se puede afirmar eso con certeza de
+  // un texto sin estructura. En cuanto hours tiene valor, manda él solo.
+  if (!account.hours || !account.hours.days) {
+    el.innerHTML = account.schedule ? `<div class="hours-fallback">${esc(account.schedule)}</div>` : '';
+    return;
+  }
+
+  const status = computeOpenStatus(account.hours);
+  const statusText = status.open
+    ? `Abierto ahora · cierra a las ${status.until}`
+    : (status.next ? `Cerrado · abre ${status.next}` : 'Cerrado');
+  const todayKey = getLocalDayAndTime(account.hours.timezone).dayKey;
+
+  el.innerHTML = `
+    <div class="hours-toggle" onclick="toggleHoursAccordion()">
+      <span class="hours-dot ${status.open ? 'open' : 'closed'}"></span>
+      <span class="hours-status-text">${esc(statusText)}</span>
+      <span class="hours-chevron" id="hours-chevron">▾</span>
+    </div>
+    <div class="hours-week" id="hours-week" hidden>
+      ${DAYS_ORDER.map(key => {
+        const shifts = account.hours.days[key] || [];
+        const text = shifts.length ? shifts.map(s => `${s.open}–${s.close}`).join(', ') : 'Cerrado';
+        return `<div class="hours-week-row${key === todayKey ? ' hours-today' : ''}"><span>${DAY_LABELS[key]}</span><span>${esc(text)}</span></div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function toggleHoursAccordion() {
+  const week = document.getElementById('hours-week');
+  const chevron = document.getElementById('hours-chevron');
+  if (!week || !chevron) return;
+  week.hidden = !week.hidden;
+  chevron.classList.toggle('open', !week.hidden);
+}
+
 function yumlistLogo(size) {
   const w = size || 110;
   return `<svg width="${w}" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -237,7 +358,7 @@ async function init() {
   if (!businessId) { showNotFound(); return; }
 
   const { data: biz, error } = await sb.from('business_public')
-    .select('id, restaurant_name, description, photos, city, lat, lng, instagram, booking_url')
+    .select('id, restaurant_name, description, photos, city, lat, lng, instagram, booking_url, schedule, hours')
     .eq('id', businessId)
     .maybeSingle();
 
@@ -305,12 +426,14 @@ function render() {
   root.innerHTML = `
     ${heroHtml()}
     <div class="page">
+      <div class="hours-section" id="hours-section"></div>
       ${account.description ? `<p class="restaurant-desc">${esc(account.description)}</p>` : ''}
       ${menus.length > 1 ? `<div class="menu-tabs" id="menu-tabs"></div>` : ''}
       <div id="menu-content"></div>
       <div id="yumlist-footer"></div>
     </div>
   `;
+  renderHoursSection();
   if (menus.length > 1) renderTabs();
   renderMenuContent();
   renderYumlistFooter();
@@ -409,6 +532,7 @@ function renderComingSoon() {
   root.innerHTML = `
     ${heroHtml()}
     <div class="page">
+      <div class="hours-section" id="hours-section"></div>
       <div class="empty-state">
         <div class="empty-state-title">Estamos preparando la carta</div>
         <p class="empty-state-body">Vuelve pronto — este restaurante todavía está montando su carta digital en yumlist.</p>
@@ -416,6 +540,7 @@ function renderComingSoon() {
       <div id="yumlist-footer"></div>
     </div>
   `;
+  renderHoursSection();
   renderYumlistFooter();
 }
 
