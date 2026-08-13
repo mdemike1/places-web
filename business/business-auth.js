@@ -177,6 +177,10 @@ async function doSignOut() {
 
 // ── Geo ───────────────────────────────────────────────────────────────────────
 
+// DUPLICADO-HAVERSINE: esta formula existe tambien en otros 4 sitios
+// (places-web: admin.html, carta-publica.html; yumlist-app: lib/geo.ts,
+// lib/hooks/useBusinessAccount.ts). Busca "DUPLICADO-HAVERSINE" para
+// encontrarlos todos si alguna vez hay que tocar el radio de la Tierra o la formula.
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371000, rad = x => x * Math.PI / 180;
   const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);

@@ -174,6 +174,10 @@ function esc(s) {
 
 function fmtPrice(n) { return Number(n).toFixed(2).replace('.', ','); }
 
+// DUPLICADO-HAVERSINE: esta formula existe tambien en otros 4 sitios
+// (places-web: admin.html, business/business-auth.js; yumlist-app: lib/geo.ts,
+// lib/hooks/useBusinessAccount.ts). Busca "DUPLICADO-HAVERSINE" para
+// encontrarlos todos si alguna vez hay que tocar el radio de la Tierra o la formula.
 function haversineM(la1, lo1, la2, lo2) {
   const R = 6371000, dL = (la2 - la1) * Math.PI / 180, dO = (lo2 - lo1) * Math.PI / 180,
     a = Math.sin(dL / 2) ** 2 + Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dO / 2) ** 2;
@@ -181,6 +185,13 @@ function haversineM(la1, lo1, la2, lo2) {
 }
 
 // ── Horario ──────────────────────────────────────────────────────────────
+// DUPLICADO-HORARIO: esta logica existe tambien en
+// yumlist-app/lib/businessHours.ts (computeOpenStatus). Si cambias la regla
+// aqui, cambiala alli tambien. Busca "DUPLICADO-HORARIO" para encontrar las dos.
+// Duplicado a propósito (no una RPC): el cálculo tiene que poder rehacerse en
+// el cliente sin red, para que "abierto ahora" siga siendo correcto aunque el
+// móvil pierda cobertura un momento — no es un dato del que nadie tenga
+// interés en mentir, así que no hace falta centralizarlo por confianza.
 const DAYS_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' };
 const WEEKDAY_TO_KEY = { Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun' };
