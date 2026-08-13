@@ -11,6 +11,35 @@
 <style>
   .profile-form { max-width: 640px; }
 
+  /* ── Horario ─────────────────────────────────────────── */
+  .hours-day-card { padding: 14px 16px; margin-bottom: 10px; }
+  .hours-day-head { display: flex; align-items: center; gap: 12px; }
+  .hours-day-label { font-size: 14px; color: var(--cream); flex: 1; }
+  .hours-closed-tag { color: rgba(245,240,232,.35); font-size: 12px; font-weight: 400; }
+  .hours-shifts { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .shift-row { display: flex; align-items: center; gap: 8px; }
+  .shift-time { max-width: 130px; padding: 8px 10px; }
+  .shift-sep { color: rgba(245,240,232,.3); }
+  .shift-spacer { width: 28px; flex-shrink: 0; }
+  .copy-panel {
+    margin-top: 12px; padding: 12px; background: rgba(245,240,232,.03);
+    border: 1px dashed rgba(245,240,232,.15); border-radius: 8px;
+  }
+  .copy-panel-label { font-size: 12px; color: rgba(245,240,232,.5); margin-bottom: 8px; }
+  .copy-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .copy-chip {
+    display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 20px;
+    background: rgba(245,240,232,.05); border: 1px solid rgba(245,240,232,.12);
+    font-size: 12px; color: rgba(245,240,232,.6); cursor: pointer;
+  }
+  .copy-chip input { margin: 0; }
+  .copy-chip-preset {
+    padding: 5px 12px; border-radius: 20px; background: rgba(196,98,45,.14);
+    border: 1px solid rgba(196,98,45,.4); color: var(--cream); font-size: 12px;
+    cursor: pointer; font-family: var(--sans);
+  }
+  .copy-panel-actions { display: flex; gap: 8px; }
+
   .photos-grid {
     display: flex;
     gap: 12px;
@@ -268,6 +297,42 @@ let onboarding   = false;
 // geocoding nuevo con éxito.
 let geocodedLat = null, geocodedLng = null, geocodedCity = null, geocodedAddressComponents = null;
 
+// ── Horario ──────────────────────────────────────────────────────────────
+const DAYS = [
+  { key: 'mon', label: 'Lunes' },
+  { key: 'tue', label: 'Martes' },
+  { key: 'wed', label: 'Miércoles' },
+  { key: 'thu', label: 'Jueves' },
+  { key: 'fri', label: 'Viernes' },
+  { key: 'sat', label: 'Sábado' },
+  { key: 'sun', label: 'Domingo' },
+];
+let hoursState = null;   // { timezone, isSuggested, days: { mon: {open, shifts:[{open,close}]}, ... } }
+let copyOpenFor = null;  // key del día cuyo panel "copiar a" está desplegado, o null
+
+// Si el negocio no tiene hours guardado todavía, se parte de un horario
+// sugerido (mediodía + noche, todos los días) marcado como "sugerido" — así
+// hay menos que rellenar desde cero, pero no se guarda como si el dueño lo
+// hubiera confirmado hasta que lo toque o lo guarde explícitamente.
+function initHoursState(account) {
+  if (account.hours && account.hours.days) {
+    const days = {};
+    DAYS.forEach(d => {
+      const shifts = account.hours.days[d.key] || [];
+      days[d.key] = {
+        open: shifts.length > 0,
+        shifts: shifts.length ? shifts.map(s => ({ ...s })) : [{ open: '13:00', close: '16:00' }],
+      };
+    });
+    return { timezone: account.hours.timezone || 'Europe/Madrid', isSuggested: false, days };
+  }
+  const days = {};
+  DAYS.forEach(d => {
+    days[d.key] = { open: true, shifts: [{ open: '13:00', close: '16:00' }, { open: '20:00', close: '23:00' }] };
+  });
+  return { timezone: 'Europe/Madrid', isSuggested: true, days };
+}
+
 async function init() {
   onboarding = isOnboardingMode();
   const auth = await requireBusinessAccount(onboarding ? { allowIncomplete: true } : undefined);
@@ -283,6 +348,7 @@ async function init() {
 
   // Existing photo paths
   photoPaths = Array.isArray(account.photos) ? [...account.photos] : [];
+  hoursState = initHoursState(account);
 
   renderPage(account);
 }
@@ -337,18 +403,17 @@ function renderPage(account) {
         <div class="char-counter" id="char-count">${(account.description ?? '').length}/300</div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="tipo_cocina">Tipo de cocina</label>
-          <input class="form-input" type="text" id="tipo_cocina" placeholder="Ej: Italiana, Japonesa, Mediterránea…" value="${esc(account.cuisine_type ?? '')}">
-          <div class="form-hint">Cómo describirías tu cocina en una o dos palabras: italiana, mediterránea, asiática, tapas, fusión… Ayuda a que te encuentren quienes buscan ese tipo de comida.</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="horario">Horario</label>
-          <input class="form-input" type="text" id="horario" placeholder="Ej: Lun–Vie 13:00–23:00" value="${esc(account.schedule ?? '')}">
-          <div class="form-hint">Cuándo estás abierto. Puede ser sencillo: "Martes a domingo, 13h-16h y 20h-23h". Cerrado los lunes también es información útil.</div>
-        </div>
+      <div class="form-group">
+        <label class="form-label" for="tipo_cocina">Tipo de cocina</label>
+        <input class="form-input" type="text" id="tipo_cocina" placeholder="Ej: Italiana, Japonesa, Mediterránea…" value="${esc(account.cuisine_type ?? '')}">
+        <div class="form-hint">Cómo describirías tu cocina en una o dos palabras: italiana, mediterránea, asiática, tapas, fusión… Ayuda a que te encuentren quienes buscan ese tipo de comida.</div>
       </div>
+
+      <!-- Horario -->
+      <div class="section-sep">Horario</div>
+      <div class="form-hint" style="margin-top:0;margin-bottom:14px">Cuándo estás abierto, día a día. Admite horario partido (mediodía y noche) y días cerrados.</div>
+      <div id="hours-suggested-banner"></div>
+      <div id="hours-editor"></div>
 
       <!-- Fotos -->
       <div class="section-sep">Fotos del local</div>
@@ -360,7 +425,7 @@ function renderPage(account) {
       <div class="form-group">
         <label class="form-label" for="reservas_url">Enlace a reservas</label>
         <input class="form-input" type="url" id="reservas_url" placeholder="https://…" value="${esc(account.booking_url ?? '')}">
-        <div class="form-hint">Si usas alguna plataforma de reservas, pega aquí el enlace. Si no, déjalo vacío.</div>
+        <div class="form-hint">Estamos trabajando para que puedas recibir reservas directamente desde yumlist. Mientras tanto, si usas otra plataforma, pega aquí tu enlace. Si no usas ninguna, déjalo vacío.</div>
       </div>
       <div class="form-group">
         <label class="form-label" for="telefono_publico">Teléfono público</label>
@@ -391,6 +456,7 @@ function renderPage(account) {
   `;
 
   renderPhotos();
+  renderHoursEditor();
 
   // Re-geocodifica al perder el foco en dirección/ciudad — mismo patrón que
   // registro.html, misma función compartida (geocode-shared.js).
@@ -502,6 +568,199 @@ async function runGeocode() {
   }
 }
 
+function renderHoursEditor() {
+  const banner = document.getElementById('hours-suggested-banner');
+  if (banner) {
+    banner.innerHTML = hoursState.isSuggested
+      ? `<div class="alert alert-info" style="margin-bottom:14px">Horario sugerido (mediodía y noche, todos los días) — revísalo y ajústalo a tu caso antes de guardar.</div>`
+      : '';
+  }
+
+  const el = document.getElementById('hours-editor');
+  if (!el) return;
+  el.innerHTML = DAYS.map(renderDayCard).join('');
+}
+
+function renderDayCard(d) {
+  const day = hoursState.days[d.key];
+  const shiftsHtml = day.open ? day.shifts.map((s, si) => `
+    <div class="shift-row">
+      <input type="time" class="form-input shift-time" value="${s.open}" onchange="onShiftChange('${d.key}', ${si}, 'open', this.value)">
+      <span class="shift-sep">–</span>
+      <input type="time" class="form-input shift-time" value="${s.close}" onchange="onShiftChange('${d.key}', ${si}, 'close', this.value)">
+      ${day.shifts.length > 1
+        ? `<button type="button" class="icon-btn danger" onclick="removeShift('${d.key}', ${si})" title="Quitar turno">✕</button>`
+        : `<span class="shift-spacer"></span>`}
+    </div>
+  `).join('') : '';
+
+  return `
+    <div class="section-card hours-day-card">
+      <div class="hours-day-head">
+        <label class="toggle">
+          <input type="checkbox" ${day.open ? 'checked' : ''} onchange="toggleDayOpen('${d.key}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="hours-day-label">${d.label}${!day.open ? ' <span class="hours-closed-tag">(cerrado)</span>' : ''}</span>
+        ${day.open ? `<button type="button" class="btn-sm" onclick="toggleCopyPanel('${d.key}')">⧉ Copiar</button>` : ''}
+      </div>
+      ${day.open ? `
+        <div class="hours-shifts">${shiftsHtml}</div>
+        <button type="button" class="add-row-btn" onclick="addShift('${d.key}')">+ Añadir turno</button>
+      ` : ''}
+      ${copyOpenFor === d.key ? renderCopyPanel(d.key) : ''}
+    </div>
+  `;
+}
+
+function renderCopyPanel(sourceKey) {
+  const options = DAYS.filter(d => d.key !== sourceKey);
+  return `
+    <div class="copy-panel">
+      <div class="copy-panel-label">Copiar el horario de ${DAYS.find(d => d.key === sourceKey).label} a:</div>
+      <div class="copy-chips">
+        <button type="button" class="copy-chip-preset" onclick="selectCopyPreset('${sourceKey}')">Lun–Vie</button>
+        ${options.map(d => `
+          <label class="copy-chip">
+            <input type="checkbox" value="${d.key}">
+            ${d.label.slice(0, 3)}
+          </label>
+        `).join('')}
+      </div>
+      <div class="copy-panel-actions">
+        <button type="button" class="btn-sm" onclick="applyCopy('${sourceKey}')">Aplicar</button>
+        <button type="button" class="btn-sm" onclick="toggleCopyPanel('${sourceKey}')">Cancelar</button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleCopyPanel(key) {
+  copyOpenFor = copyOpenFor === key ? null : key;
+  renderHoursEditor();
+}
+
+function selectCopyPreset(sourceKey) {
+  const monFri = ['mon', 'tue', 'wed', 'thu', 'fri'].filter(k => k !== sourceKey);
+  document.querySelectorAll('.copy-panel input[type=checkbox]').forEach(cb => {
+    cb.checked = monFri.includes(cb.value);
+  });
+}
+
+function applyCopy(sourceKey) {
+  const targets = [...document.querySelectorAll('.copy-panel input[type=checkbox]:checked')].map(cb => cb.value);
+  if (targets.length === 0) { alert('Elige al menos un día.'); return; }
+  const source = hoursState.days[sourceKey];
+  targets.forEach(key => {
+    hoursState.days[key] = { open: source.open, shifts: source.shifts.map(s => ({ ...s })) };
+  });
+  hoursState.isSuggested = false;
+  copyOpenFor = null;
+  renderHoursEditor();
+}
+
+function toggleDayOpen(key, checked) {
+  hoursState.days[key].open = checked;
+  hoursState.isSuggested = false;
+  renderHoursEditor();
+}
+
+function addShift(key) {
+  hoursState.days[key].shifts.push({ open: '20:00', close: '23:00' });
+  hoursState.isSuggested = false;
+  renderHoursEditor();
+}
+
+function removeShift(key, idx) {
+  hoursState.days[key].shifts.splice(idx, 1);
+  hoursState.isSuggested = false;
+  renderHoursEditor();
+}
+
+// No repinta el editor entero al cambiar una hora — perdería el foco del
+// input que se está editando (mismo patrón "uncontrolled" que ya usa
+// carta.html). Solo se actualiza el estado y, si hacía falta, se retira el
+// aviso de "sugerido" sin tocar el resto del formulario.
+function onShiftChange(key, idx, field, value) {
+  hoursState.days[key].shifts[idx][field] = value;
+  if (hoursState.isSuggested) {
+    hoursState.isSuggested = false;
+    const banner = document.getElementById('hours-suggested-banner');
+    if (banner) banner.innerHTML = '';
+  }
+}
+
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Errores = bloquean guardar (horarios lógicamente imposibles: solapes,
+// turno de 0 minutos). Avisos = piden confirmación pero no bloquean (turnos
+// inusualmente largos — el caso típico de un cruce de medianoche mal
+// tecleado, como 20:00–13:00 en vez de 20:00–01:00).
+function validateHours(state) {
+  const errors = [];
+  const warnings = [];
+
+  DAYS.forEach((d, idx) => {
+    const day = state.days[d.key];
+    if (!day.open || day.shifts.length === 0) return;
+
+    const shifts = day.shifts.map(s => ({ ...s, crossesMidnight: toMinutes(s.close) <= toMinutes(s.open) }));
+
+    shifts.forEach(s => {
+      if (s.open === s.close) errors.push(`${d.label}: un turno no puede abrir y cerrar a la misma hora (${s.open}).`);
+    });
+
+    const sorted = [...shifts].sort((a, b) => toMinutes(a.open) - toMinutes(b.open));
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const a = sorted[i], b = sorted[i + 1];
+      const aEnd = toMinutes(a.close) + (a.crossesMidnight ? 24 * 60 : 0);
+      if (aEnd > toMinutes(b.open)) {
+        errors.push(`${d.label}: el turno ${a.open}–${a.close} se solapa con ${b.open}–${b.close}.`);
+      }
+    }
+
+    sorted.forEach(s => {
+      const dur = toMinutes(s.close) + (s.crossesMidnight ? 24 * 60 : 0) - toMinutes(s.open);
+      if (dur > 8 * 60) {
+        warnings.push(`${d.label}: el turno ${s.open}–${s.close} dura ${(dur / 60).toFixed(1)} horas${s.crossesMidnight ? ' (cruza la medianoche)' : ''}. ¿Es correcto?`);
+      }
+    });
+
+    // Un turno de hoy que cruza medianoche no puede solaparse con el primer
+    // turno de mañana — si no se comprueba, "abierto ahora" podría mentir
+    // justo en ese margen.
+    const last = sorted[sorted.length - 1];
+    if (last && last.crossesMidnight) {
+      const nextDayInfo = DAYS[(idx + 1) % 7];
+      const nextDay = state.days[nextDayInfo.key];
+      if (nextDay.open && nextDay.shifts.length) {
+        const nextFirst = [...nextDay.shifts].sort((a, b) => toMinutes(a.open) - toMinutes(b.open))[0];
+        if (toMinutes(last.close) > toMinutes(nextFirst.open)) {
+          errors.push(`${d.label} cruza la medianoche hasta las ${last.close}, pero ${nextDayInfo.label} abre a las ${nextFirst.open} — se solapan.`);
+        }
+      }
+    }
+  });
+
+  return { errors, warnings };
+}
+
+function hoursStateToJson(state) {
+  const days = {};
+  DAYS.forEach(d => {
+    days[d.key] = state.days[d.key].open ? state.days[d.key].shifts.map(s => ({ open: s.open, close: s.close })) : [];
+  });
+  return { timezone: state.timezone, days };
+}
+
+function formatDayHoursShort(dayState) {
+  if (!dayState || !dayState.open || dayState.shifts.length === 0) return 'Cerrado';
+  return dayState.shifts.map(s => `${s.open}–${s.close}`).join(', ');
+}
+
 // Insiste sin bloquear: si en onboarding faltan los campos núcleo, pide
 // confirmación explícita en vez de dejar "Continuar" deshabilitado — un
 // restaurante atascado que no puede salir se va.
@@ -518,10 +777,23 @@ function confirmIncompleteCoreData() {
 async function saveProfile() {
   if (onboarding && !confirmIncompleteCoreData()) return;
 
-  const btn    = document.getElementById('save-btn');
-  const status = document.getElementById('save-status');
   const alerts = document.getElementById('alerts');
   alerts.innerHTML = '';
+
+  // Validar el horario ANTES de tocar fotos/red — si hay un solape real, no
+  // tiene sentido subir nada todavía. Los errores bloquean; los avisos (turno
+  // inusualmente largo) piden confirmación explícita antes de seguir.
+  const { errors, warnings } = validateHours(hoursState);
+  if (errors.length > 0) {
+    showAlert(errors.join('<br>'), 'error');
+    return;
+  }
+  if (warnings.length > 0 && !confirm(warnings.join('\n\n') + '\n\n¿Guardar el horario tal cual?')) {
+    return;
+  }
+
+  const btn    = document.getElementById('save-btn');
+  const status = document.getElementById('save-status');
   btn.disabled = true;
   status.textContent = 'Guardando…';
 
@@ -554,7 +826,7 @@ async function saveProfile() {
     address:         document.getElementById('direccion').value.trim() || null,
     description:     document.getElementById('descripcion').value.trim() || null,
     cuisine_type:    document.getElementById('tipo_cocina').value.trim() || null,
-    schedule:        document.getElementById('horario').value.trim() || null,
+    hours:           hoursStateToJson(hoursState),
     city:            geocodedCity || document.getElementById('ciudad').value.trim() || null,
     booking_url:     document.getElementById('reservas_url').value.trim() || null,
     public_phone:    document.getElementById('telefono_publico').value.trim() || null,
@@ -611,7 +883,11 @@ function openPreview() {
   const name        = document.getElementById('restaurant_name')?.value.trim() || '';
   const description = document.getElementById('descripcion')?.value.trim() || '';
   const cuisine     = document.getElementById('tipo_cocina')?.value.trim() || '';
-  const schedule    = document.getElementById('horario')?.value.trim() || '';
+  // "Hoy" según el reloj del propio dispositivo — el preview es una maqueta
+  // rápida, no el cálculo real de "abierto ahora" (eso vive en la carta
+  // pública/app, con huso horario IANA de verdad).
+  const todayKey    = DAYS[(new Date().getDay() + 6) % 7].key;
+  const schedule    = hoursState ? formatDayHoursShort(hoursState.days[todayKey]) : '';
   const booking     = document.getElementById('reservas_url')?.value.trim() || '';
   const instagram   = document.getElementById('instagram')?.value.trim().replace(/^@/, '') || '';
   const phone       = document.getElementById('telefono_publico')?.value.trim() || '';
@@ -690,7 +966,7 @@ function buildPreviewHTML({ name, description, cuisine, schedule, booking, insta
   // Info rows
   const rows = [];
   if (cuisine)   rows.push(['TIPO DE COCINA', esc(cuisine)]);
-  if (schedule)  rows.push(['HORARIO', esc(schedule)]);
+  if (schedule)  rows.push(['HORARIO HOY', esc(schedule)]);
   if (phone)     rows.push(['TELÉFONO', esc(phone)]);
   if (instagram) rows.push(['INSTAGRAM', `@${esc(instagram)}`]);
   if (booking)   rows.push(['RESERVAS', 'Reservar mesa']);

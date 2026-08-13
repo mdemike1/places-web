@@ -48,25 +48,6 @@
   .order-btn:hover:not(:disabled) { background: rgba(245,240,232,.1); color: var(--cream); }
   .order-btn:disabled { opacity: .25; cursor: default; }
 
-  .toggle { position: relative; display: inline-block; width: 36px; height: 21px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .toggle-slider {
-    position: absolute; inset: 0; background: rgba(245,240,232,.15); border-radius: 20px;
-    cursor: pointer; transition: background .2s;
-  }
-  .toggle-slider::before {
-    content: ''; position: absolute; width: 15px; height: 15px; left: 3px; top: 3px;
-    background: #F5F0E8; border-radius: 50%; transition: transform .2s;
-  }
-  .toggle input:checked + .toggle-slider { background: var(--clay); }
-  .toggle input:checked + .toggle-slider::before { transform: translateX(15px); }
-  .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(245,240,232,.5); }
-
-  .section-card {
-    background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-md);
-    padding: 18px 20px; margin-bottom: 16px;
-  }
-  .section-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .section-name-input {
     background: none; border: none; color: var(--cream); font-family: var(--sans); font-weight: 500;
     font-size: 15px; outline: none; padding: 3px 6px; border-radius: 6px; flex: 1; min-width: 80px;
@@ -95,21 +76,6 @@
     background: rgba(245,240,232,.06); color: rgba(245,240,232,.45); white-space: nowrap;
   }
   .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .icon-btn {
-    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-    background: none; border: none; color: rgba(245,240,232,.35); cursor: pointer; border-radius: 6px;
-    transition: all .15s; padding: 0;
-  }
-  .icon-btn:hover { background: rgba(245,240,232,.08); color: var(--cream); }
-  .icon-btn.danger:hover { background: rgba(196,98,45,.14); color: var(--ember); }
-
-  .add-row-btn {
-    display: flex; align-items: center; gap: 6px; padding: 9px 4px; margin-top: 4px;
-    background: none; border: none; color: rgba(245,240,232,.4); font-family: var(--sans);
-    font-size: 13px; cursor: pointer; transition: color .15s;
-  }
-  .add-row-btn:hover { color: var(--cream); }
-
   .item-form {
     background: rgba(245,240,232,.03); border: 1px dashed rgba(245,240,232,.15);
     border-radius: var(--r-sm); padding: 16px; margin: 10px 0;
