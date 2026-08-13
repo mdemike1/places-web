@@ -21,6 +21,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="business-auth.js"></script>
+<script src="tour-shared.js"></script>
 <script>
 let currentAccount = null;
 
@@ -30,6 +31,8 @@ async function init() {
   const { account } = auth;
   currentAccount = account;
   document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/reviews');
+  mountTourRelaunchButton(account);
+  maybeAutoStartTour(account);
 
   const canRespond = (account?.plan === 'pro' || account?.plan === 'premium') && account?.status === 'verified';
 

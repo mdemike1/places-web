@@ -284,6 +284,7 @@
 <script src="business-auth.js"></script>
 <script src="geocode-shared.js"></script>
 <script src="onboarding-shared.js"></script>
+<script src="tour-shared.js"></script>
 <script>
 let bizAccount   = null;
 let photoPaths   = [];   // current saved photo paths (from DB)
@@ -344,6 +345,8 @@ async function init() {
     renderOnboardingChrome('sidebar-mount', 'perfil');
   } else {
     document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/perfil');
+    mountTourRelaunchButton(account);
+    maybeAutoStartTour(account);
   }
 
   // Existing photo paths

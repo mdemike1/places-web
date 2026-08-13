@@ -128,6 +128,7 @@
 <script src="business-auth.js"></script>
 <script src="qr-shared.js"></script>
 <script src="onboarding-shared.js"></script>
+<script src="tour-shared.js"></script>
 <script>
 const ALLERGENS = [
   { slug: 'gluten',         label: 'Gluten' },
@@ -180,6 +181,8 @@ async function init() {
     renderOnboardingChrome('sidebar-mount', 'carta');
   } else {
     document.getElementById('sidebar-mount').innerHTML = buildSidebar(account, '/business/carta');
+    mountTourRelaunchButton(account);
+    maybeAutoStartTour(account);
   }
 
   await loadMenus();

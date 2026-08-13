@@ -727,6 +727,101 @@ textarea.form-input { resize: vertical; min-height: 90px; }
 .modal-title { font-family: var(--serif); font-size: 25px; font-weight: 300; margin-bottom: 12px; }
 .modal-body  { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 26px; }
 
+/* ─── Tour guiado del panel ──────────────────────────── */
+/* .sidebar tiene su propio z-index (50 en escritorio, 80 en móvil), lo que
+   crea un contexto de apilamiento propio: subir el z-index de un .sidebar-link
+   NO basta para que asome por encima de #tour-overlay si el .sidebar en sí
+   se queda por debajo. Por eso, mientras el tour está activo, se sube el
+   .sidebar entero (que ya se ve normal, sin oscurecer) y solo se resalta con
+   un anillo el enlace de la parada actual. */
+body.tour-active .sidebar { z-index: 401; }
+
+.tour-overlay {
+  position: fixed; inset: 0;
+  background: rgba(8,7,6,.72);
+  z-index: 400;
+  animation: up .25s ease both;
+}
+
+.tour-spotlight {
+  background: rgba(196,98,45,.16) !important;
+  color: var(--cream) !important;
+  box-shadow: 0 0 0 3px rgba(196,98,45,.45), 0 0 26px 3px rgba(196,98,45,.3);
+}
+.tour-spotlight svg { opacity: 1 !important; color: var(--ember); }
+
+.tour-tooltip {
+  position: fixed;
+  z-index: 402;
+  width: 280px;
+  max-width: calc(100vw - 28px);
+  background: linear-gradient(170deg, #201d1a, #171512);
+  border: 1px solid rgba(245,240,232,.14);
+  border-radius: var(--r-md);
+  padding: 20px 22px;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.7);
+  animation: riseIn .25s cubic-bezier(.2,.7,.2,1) both;
+}
+.tour-step-count {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ember);
+  margin-bottom: 6px;
+}
+.tour-tooltip-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 21px;
+  margin-bottom: 8px;
+}
+.tour-tooltip-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.tour-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tour-skip {
+  background: none;
+  border: none;
+  color: rgba(245,240,232,.35);
+  font-family: var(--sans);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color .18s;
+}
+.tour-skip:hover { color: rgba(245,240,232,.7); }
+.tour-tooltip-nav { display: flex; gap: 8px; }
+.tour-tooltip-nav .btn-primary,
+.tour-tooltip-nav .btn-ghost { padding: 8px 16px; font-size: 13px; }
+
+.tour-relaunch-btn {
+  position: fixed;
+  top: 20px; right: 24px;
+  z-index: 90;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(245,240,232,.06);
+  border: 0.5px solid rgba(245,240,232,.18);
+  border-radius: 50%;
+  color: rgba(245,240,232,.55);
+  cursor: pointer;
+  transition: background .18s, color .18s;
+}
+.tour-relaunch-btn:hover { background: rgba(245,240,232,.12); color: var(--cream); }
+
+@media (max-width: 900px) {
+  .tour-relaunch-btn { top: 14px; right: 14px; }
+}
+
 /* ─── Admin ──────────────────────────────────────────── */
 .verification-card {
   background: var(--card-bg);

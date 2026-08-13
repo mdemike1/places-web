@@ -230,17 +230,17 @@ function buildSidebar(account, activePage) {
     : `<a href="/business/verificacion" style="text-decoration:none">${statusBadgeInner}</a>`;
 
   const nav = [
-    { href: '/business/dashboard', label: 'Dashboard',
+    { href: '/business/dashboard', label: 'Dashboard', tour: 'dashboard',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' },
-    { href: '/business/perfil',    label: 'Mi perfil',
+    { href: '/business/perfil',    label: 'Mi perfil', tour: 'perfil',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
-    { href: '/business/carta',     label: 'Carta',
+    { href: '/business/carta',     label: 'Carta', tour: 'carta',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>' },
-    { href: '/business/reviews',   label: 'Reviews',
+    { href: '/business/reviews',   label: 'Reviews', tour: 'reviews',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' },
-    { href: '/business/analytics', label: 'Analytics',
+    { href: '/business/analytics', label: 'Analytics', tour: 'analytics',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
-    { href: '/business/planes',    label: 'Planes',
+    { href: '/business/planes',    label: 'Planes', tour: 'planes',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>' },
   ];
 
@@ -260,7 +260,7 @@ function buildSidebar(account, activePage) {
       <span class="badge badge-plan">${planLabel}</span>
     </div>
     <nav class="sidebar-nav">
-      ${nav.map(n => `<a href="${n.href}" class="sidebar-link${activePage === n.href ? ' active' : ''}">${n.icon} ${n.label}</a>`).join('')}
+      ${nav.map(n => `<a href="${n.href}" class="sidebar-link${activePage === n.href ? ' active' : ''}" data-tour="${n.tour}">${n.icon} ${n.label}</a>`).join('')}
     </nav>
     <div class="sidebar-footer">
       <button class="btn-signout" onclick="doSignOut()">
