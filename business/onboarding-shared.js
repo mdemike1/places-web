@@ -18,6 +18,29 @@ function isOnboardingMode() {
   return new URLSearchParams(location.search).get('onboarding') === '1';
 }
 
+// Marca de "saltó la verificación", guardada en este navegador — no en la
+// base de datos. No hay forma de derivar "la saltó" de "no ha llegado
+// todavía" a partir de business_verification_docs (saltar no deja ninguna
+// fila), así que sin esta marca el router de /business/onboarding
+// recalcularía nextStep='verificacion' cada vez y devolvería al usuario a la
+// misma pantalla que acaba de saltar.
+//
+// Es local al navegador a propósito: si el usuario retoma el onboarding
+// desde otro dispositivo antes de terminar la carta, se le ofrecerá
+// verificar una vez más — un paso opcional de un clic, no un bloqueo. No
+// merece una columna nueva en business_accounts para ese caso límite.
+function verificacionSkipKey(businessId) {
+  return `yumlist_verificacion_skipped_${businessId}`;
+}
+
+function markVerificacionSkipped(businessId) {
+  try { localStorage.setItem(verificacionSkipKey(businessId), '1'); } catch (e) { /* Safari modo privado, etc. */ }
+}
+
+function wasVerificacionSkipped(businessId) {
+  try { return localStorage.getItem(verificacionSkipKey(businessId)) === '1'; } catch (e) { return false; }
+}
+
 // Monta la barra superior y activa el layout de ancho completo (ver business.css,
 // body.onboarding-mode). Sustituye a buildSidebar() para las páginas en modo
 // onboarding — mount debe ser el mismo #sidebar-mount que ya usan.

@@ -198,6 +198,7 @@
       const skip = document.getElementById('skip-link');
       skip.textContent = 'Saltar por ahora';
       skip.href = continueUrl();
+      skip.addEventListener('click', () => markVerificacionSkipped(businessId));
       document.getElementById('help-link').hidden = false;
       document.getElementById('success-continue-link').textContent = 'Continuar →';
       document.getElementById('success-continue-link').href = continueUrl();

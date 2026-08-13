@@ -41,6 +41,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="business-auth.js"></script>
+<script src="onboarding-shared.js"></script>
 <script>
 // Punto de entrada único del onboarding: registro.html manda aquí siempre, y
 // requireBusinessAccount() manda aquí a cualquier cuenta con el onboarding a
@@ -62,7 +63,17 @@ async function init() {
 
   const isFresh = !state.hasLocalData && !state.hasPhotos;
   if (!isFresh) {
-    window.location.replace(stepUrl(state.nextStep));
+    // computeOnboardingState() no puede saber si la verificación se saltó o
+    // si simplemente no se ha llegado todavía (saltar no deja fila en
+    // business_verification_docs) — por eso recalcula 'verificacion' cada
+    // vez. Esa marca sí la tenemos, guardada localmente al saltar
+    // (ver onboarding-shared.js) — si ya se saltó, el siguiente paso real es
+    // la carta, no la misma pantalla que se acaba de descartar.
+    let nextStep = state.nextStep;
+    if (nextStep === 'verificacion' && wasVerificacionSkipped(account.id)) {
+      nextStep = 'carta';
+    }
+    window.location.replace(stepUrl(nextStep));
     return;
   }
 
