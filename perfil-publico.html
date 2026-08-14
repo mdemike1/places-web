@@ -127,7 +127,11 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="public-shared.js"></script>
+<!-- Ruta absoluta a propósito: esta página vive en /n/{id} (rewrite de vercel.json),
+     y un src relativo se resolvería como /n/public-shared.js (404 → HTML → MIME
+     rechazado por el navegador). Mismo fallo de fondo que ya tuvo la foto de
+     portada de carta-publica.html en /r/{id}. -->
+<script src="/public-shared.js"></script>
 <script>
 const businessId = getBusinessIdFromUrl(['n']);
 
