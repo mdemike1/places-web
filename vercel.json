@@ -13,6 +13,7 @@
   ],
   "rewrites": [
     { "source": "/r/:id",                 "destination": "/carta-publica.html" },
+    { "source": "/n/:id",                 "destination": "/perfil-publico.html" },
     { "source": "/negocios",              "destination": "/negocios.html" },
     { "source": "/business",              "destination": "/business/index.html" },
     { "source": "/business/registro",     "destination": "/business/registro.html" },

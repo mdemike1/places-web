@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restaurante — yumlist</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e0d0c' rx='8'/><circle cx='11' cy='16' r='8' fill='%23C4622D'/><circle cx='19' cy='16' r='8' fill='%23F5F0E8' fill-opacity='0.15'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0e0d0c; --cream: #F5F0E8; --sand: #B89F87;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--ink); color: var(--cream); font-family: var(--sans); min-height: 100vh; }
+
+.page { max-width: 640px; margin: 0 auto; padding: 18px 20px 60px; }
+.loading { text-align: center; padding: 90px 20px; color: rgba(245,240,232,.4); font-size: 14px; }
+
+/* Portada — mismo tratamiento que carta-publica.html a propósito (misma
+   marca, mismo primer vistazo desde un QR o desde un enlace de Instagram). */
+.hero-cover {
+  position: relative; height: 190px; overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 85% -20%, rgba(196,98,45,.22), transparent 55%),
+    linear-gradient(165deg, #201d1a, #0e0d0c);
+}
+.hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,12,0) 0%, rgba(14,13,12,.4) 45%, rgba(14,13,12,.95) 100%); }
+.hero-name-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 12px; max-width: 640px; margin: 0 auto; }
+.restaurant-name { font-family: var(--serif); font-weight: 300; font-size: 27px; line-height: 1.15; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,.55); }
+.restaurant-desc { font-size: 13.5px; color: var(--sand); line-height: 1.6; margin: 4px 0 18px; }
+.meta-line { font-size: 12.5px; color: rgba(245,240,232,.55); letter-spacing: .01em; margin: 10px 0 0; }
+
+@media (min-width: 480px) {
+  .hero-cover { height: 230px; }
+  .restaurant-name { font-size: 34px; }
+}
+
+/* Horario — igual que carta-publica.html; renderHoursSection() (public-shared.js)
+   pinta esto mismo en las dos páginas, por eso las clases son idénticas. */
+.hours-section { margin-bottom: 6px; }
+.hours-toggle { display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 11px 0; user-select: none; }
+.hours-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.hours-dot.open { background: #4CAF50; box-shadow: 0 0 6px rgba(76,175,80,.45); }
+.hours-dot.closed { background: rgba(245,240,232,.28); }
+.hours-status-text { font-size: 13.5px; color: var(--cream); flex: 1; }
+.hours-chevron { color: rgba(245,240,232,.35); font-size: 11px; transition: transform .2s; }
+.hours-chevron.open { transform: rotate(180deg); }
+.hours-fallback { font-size: 13.5px; color: var(--sand); padding: 11px 0; }
+.hours-week { padding: 2px 0 10px; border-top: 1px solid rgba(245,240,232,.08); }
+.hours-week-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 13px; color: rgba(245,240,232,.55); }
+.hours-week-row.hours-today { color: var(--cream); font-weight: 500; }
+
+/* Dirección + Maps */
+.address-block { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(245,240,232,.08); }
+.address-text { font-size: 13.5px; color: rgba(245,240,232,.7); line-height: 1.6; margin-bottom: 10px; }
+.maps-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 100px;
+  background: rgba(245,240,232,.05); border: 1px solid rgba(245,240,232,.14);
+  color: var(--cream); font-family: var(--sans); font-size: 13px; text-decoration: none;
+  transition: background .2s;
+}
+.maps-btn:hover { background: rgba(245,240,232,.1); }
+
+/* Vista previa de la carta — contenido real (nombre + precio), sin
+   interactividad ni fotos: eso vive en /r/{id}, no se duplica el motor
+   completo aquí, solo un adelanto que demuestra que la carta existe. */
+.menu-preview-card {
+  margin-top: 26px; padding: 20px; border-radius: 14px;
+  background: linear-gradient(160deg, rgba(245,240,232,.045), rgba(245,240,232,.015));
+  border: 1px solid rgba(245,240,232,.08);
+}
+.menu-preview-title { font-family: var(--serif); font-weight: 300; font-size: 21px; margin-bottom: 12px; }
+.menu-preview-item { display: flex; align-items: baseline; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(245,240,232,.05); }
+.menu-preview-item:last-of-type { border-bottom: none; }
+.menu-preview-name { font-size: 14px; color: var(--cream); }
+.menu-preview-leader { flex: 1; min-width: 10px; border-bottom: 1px dotted rgba(245,240,232,.16); margin-bottom: 4px; }
+.menu-preview-price { font-family: var(--serif); font-size: 15px; color: rgba(245,240,232,.85); white-space: nowrap; flex-shrink: 0; }
+.menu-preview-cta {
+  display: block; text-align: center; margin-top: 16px; padding: 12px;
+  border-radius: 100px; background: rgba(196,98,45,.14); border: 1px solid rgba(196,98,45,.3);
+  color: var(--cream); font-family: var(--sans); font-size: 13.5px; text-decoration: none;
+  transition: background .2s;
+}
+.menu-preview-cta:hover { background: rgba(196,98,45,.22); }
+.menu-preview-empty { font-size: 13px; color: rgba(245,240,232,.4); line-height: 1.6; }
+
+/* Nota media + fotos de clientes — añadido cuando existe, nunca un hueco */
+.rating-block { text-align: center; margin-top: 34px; }
+.rating-value { font-family: var(--serif); font-weight: 300; font-size: 44px; line-height: 1; }
+.rating-label { font-size: 12px; color: rgba(245,240,232,.4); margin-top: 6px; }
+
+.nearby-posts { margin-top: 30px; }
+.nearby-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(245,240,232,.35); margin-bottom: 10px; }
+.nearby-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.nearby-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block; }
+
+.yumlist-block { margin-top: 40px; padding-top: 30px; border-top: 1px solid rgba(245,240,232,.08); text-align: center; }
+.yumlist-logo { margin-bottom: 10px; }
+.yumlist-tagline { font-size: 13px; color: var(--sand); margin-bottom: 18px; }
+.yumlist-btn {
+  display: inline-block; padding: 12px 28px; border-radius: 100px;
+  background: rgba(245,240,232,.08); border: 1px solid rgba(245,240,232,.18);
+  color: var(--cream); font-family: var(--sans); font-size: 13px; text-decoration: none;
+  transition: background .2s;
+}
+.yumlist-btn:hover { background: rgba(245,240,232,.14); }
+.yumlist-extra-links { display: flex; justify-content: center; gap: 18px; margin-top: 16px; font-size: 12px; }
+.yumlist-extra-links a { color: rgba(245,240,232,.4); text-decoration: none; }
+.yumlist-extra-links a:hover { color: var(--cream); }
+
+.not-found { text-align: center; padding: 110px 20px 40px; }
+.not-found-logo { margin-bottom: 28px; }
+.empty-state-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 10px; }
+.empty-state-body { font-size: 13px; color: var(--sand); max-width: 320px; margin: 0 auto; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div id="root">
+  <div class="page"><div class="loading">Cargando…</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="public-shared.js"></script>
+<script>
+const businessId = getBusinessIdFromUrl(['n']);
+
+let account = null;
+
+// Con menos de esta cantidad de valoraciones agrupadas (comida+servicio+precio
+// de todos los posts cercanos, no posts en sí), la nota media no es un número
+// honesto — una sola muy alta o muy baja la distorsiona demasiado.
+const MIN_RATINGS_FOR_AVERAGE = 5;
+// Con menos de 3 fotos el bloque queda pobre y puede ser una sola foto
+// irrelevante — mismo umbral que carta-publica.html.
+const MIN_PHOTOS_TO_SHOW = 3;
+
+async function init() {
+  if (!businessId) { showNotFound(); return; }
+
+  const { data: biz, error } = await sb.from('business_public')
+    .select('id, restaurant_name, description, cuisine_type, city, lat, lng, instagram, booking_url, schedule, hours, photos, has_menu, address')
+    .eq('id', businessId)
+    .maybeSingle();
+
+  if (error || !biz) { showNotFound(); return; }
+  account = biz;
+  document.title = `${account.restaurant_name || 'Restaurante'} — yumlist`;
+
+  render();
+}
+
+// Portada: foto del local si existe, si no el fondo degradado de marca ya
+// definido en .hero-cover hace de fallback (nunca queda un hueco).
+//
+// business_public.photos guarda RUTAS del bucket business-docs (no URLs
+// completas) — hay que pasarlas por getPublicUrl() antes de usarlas en
+// <img src>, o resuelven relativas a la página actual.
+function heroHtml() {
+  const path = account.photos?.[0];
+  const photoUrl = path ? sb.storage.from('business-docs').getPublicUrl(path).data.publicUrl : null;
+  return `
+    <div class="hero-cover">
+      ${photoUrl ? `<img class="hero-photo" src="${esc(photoUrl)}" alt="" loading="lazy">` : ''}
+      <div class="hero-scrim"></div>
+      <div class="hero-name-wrap"><h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1></div>
+    </div>`;
+}
+
+function metaLineHtml() {
+  const parts = [account.cuisine_type, account.city].filter(Boolean);
+  return parts.length ? `<div class="meta-line">${parts.map(esc).join(' · ')}</div>` : '';
+}
+
+function addressBlockHtml() {
+  const hasAddress = !!account.address;
+  const hasCoords = account.lat != null && account.lng != null;
+  if (!hasAddress && !hasCoords) return '';
+
+  const mapsHref = hasCoords
+    ? `https://www.google.com/maps/search/?api=1&query=${account.lat},${account.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(account.address + ' ' + (account.city || ''))}`;
+
+  return `
+    <div class="address-block">
+      ${hasAddress ? `<div class="address-text">${esc(account.address)}</div>` : ''}
+      <a class="maps-btn" href="${mapsHref}" target="_blank" rel="noopener">Cómo llegar →</a>
+    </div>`;
+}
+
+function render() {
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    ${heroHtml()}
+    <div class="page">
+      <div class="hours-section" id="hours-section"></div>
+      ${metaLineHtml()}
+      ${account.description ? `<p class="restaurant-desc">${esc(account.description)}</p>` : ''}
+      ${addressBlockHtml()}
+      <div id="menu-preview"></div>
+      <div id="social-proof"></div>
+      <div id="yumlist-footer"></div>
+    </div>
+  `;
+  renderHoursSection(account);
+  loadMenuPreview();
+  loadSocialProof();
+  renderYumlistFooter();
+}
+
+// Adelanto real de la carta: primeros platos (nombre + precio) del primer
+// menú visible, y un acceso claro al resto. No reimplementa el motor de
+// pestañas/expandir de carta-publica.html — solo demuestra que la carta
+// existe, con contenido real en vez de una promesa de contenido.
+async function loadMenuPreview() {
+  const el = document.getElementById('menu-preview');
+  if (!el) return;
+
+  if (!account.has_menu) {
+    el.innerHTML = `
+      <div class="menu-preview-card">
+        <div class="menu-preview-title">Carta</div>
+        <div class="menu-preview-empty">Este restaurante todavía está montando su carta digital en yumlist. Vuelve pronto.</div>
+      </div>`;
+    return;
+  }
+
+  const { data: menus } = await sb.from('business_menus')
+    .select('id, sort_order')
+    .eq('business_id', account.id)
+    .eq('visible', true)
+    .order('sort_order', { ascending: true });
+
+  if (!menus || menus.length === 0) { el.innerHTML = ''; return; }
+
+  const { data: sections } = await sb.from('business_menu_sections')
+    .select('id, menu_id, sort_order')
+    .in('menu_id', menus.map(m => m.id))
+    .order('sort_order', { ascending: true });
+
+  const sectionIds = (sections ?? []).map(s => s.id);
+  if (sectionIds.length === 0) { el.innerHTML = ''; return; }
+
+  const firstMenuSectionIds = (sections ?? [])
+    .filter(s => s.menu_id === menus[0].id)
+    .map(s => s.id);
+
+  const { data: previewItems } = await sb.from('business_menu_items')
+    .select('name, price, price_note')
+    .in('section_id', firstMenuSectionIds.length ? firstMenuSectionIds : sectionIds)
+    .eq('available', true)
+    .order('sort_order', { ascending: true })
+    .limit(5);
+
+  const { count } = await sb.from('business_menu_items')
+    .select('*', { count: 'exact', head: true })
+    .in('section_id', sectionIds)
+    .eq('available', true);
+
+  const items = previewItems ?? [];
+  if (items.length === 0) { el.innerHTML = ''; return; }
+
+  const itemsHtml = items.map(it => {
+    const priceHtml = it.price != null ? `${fmtPrice(it.price)} €` : (it.price_note ? esc(it.price_note) : '');
+    return `
+      <div class="menu-preview-item">
+        <span class="menu-preview-name">${esc(it.name)}</span>
+        <span class="menu-preview-leader"></span>
+        <span class="menu-preview-price">${priceHtml}</span>
+      </div>`;
+  }).join('');
+
+  const total = count ?? items.length;
+  const ctaLabel = total > items.length ? `Ver la carta completa (${total} platos) →` : 'Ver la carta completa →';
+
+  el.innerHTML = `
+    <div class="menu-preview-card">
+      <div class="menu-preview-title">Carta</div>
+      ${itemsHtml}
+      <a class="menu-preview-cta" href="/r/${encodeURIComponent(account.id)}">${ctaLabel}</a>
+    </div>`;
+}
+
+// Nota media (≥5 valoraciones agrupadas) y fotos de clientes (≥3) — un único
+// fetch de posts cercanos (public-shared.js), cada bloque decide solo si
+// tiene suficiente para mostrarse. Ninguno de los dos aparece como hueco.
+async function loadSocialProof() {
+  const el = document.getElementById('social-proof');
+  if (!el) return;
+
+  const nearby = await fetchNearbyPosts(account);
+  if (nearby.length === 0) { el.innerHTML = ''; return; }
+
+  const allRatings = nearby.flatMap(p => {
+    const vals = [];
+    if (p.rating_food    != null) vals.push(Number(p.rating_food));
+    if (p.rating_service != null) vals.push(Number(p.rating_service));
+    if (p.rating_price   != null) vals.push(Number(p.rating_price));
+    return vals;
+  }).filter(v => !isNaN(v));
+
+  const ratingHtml = allRatings.length >= MIN_RATINGS_FOR_AVERAGE
+    ? `<div class="rating-block">
+         <div class="rating-value">${avg(allRatings)}</div>
+         <div class="rating-label">nota media de quienes han estado aquí</div>
+       </div>`
+    : '';
+
+  const withPhoto = nearby.filter(p => p.photo_url);
+  const photosHtml = withPhoto.length >= MIN_PHOTOS_TO_SHOW
+    ? `<div class="nearby-posts">
+         <div class="nearby-label">Fotos de gente que ha estado aquí</div>
+         <div class="nearby-grid">${withPhoto.slice(0, 6).map(p => `<img src="${esc(p.photo_url)}" alt="" loading="lazy">`).join('')}</div>
+       </div>`
+    : '';
+
+  el.innerHTML = ratingHtml + photosHtml;
+}
+
+function renderYumlistFooter() {
+  const wrap = document.getElementById('yumlist-footer');
+  if (!wrap) return;
+  const extraLinks = [];
+  if (account.instagram) {
+    const handle = String(account.instagram).replace(/^@/, '');
+    extraLinks.push(`<a href="https://instagram.com/${esc(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a>`);
+  }
+  if (account.booking_url) {
+    extraLinks.push(`<a href="${esc(account.booking_url)}" target="_blank" rel="noopener">Reservar</a>`);
+  }
+
+  wrap.innerHTML = `
+    <div class="yumlist-block">
+      <div class="yumlist-logo">${yumlistLogo(110)}</div>
+      <p class="yumlist-tagline">Descubre qué opinan tus amigos de este y otros restaurantes.</p>
+      <a class="yumlist-btn" href="https://yumlist.app" target="_blank" rel="noopener">Ir a la app →</a>
+      ${extraLinks.length ? `<div class="yumlist-extra-links">${extraLinks.join('')}</div>` : ''}
+    </div>
+  `;
+}
+
+function showNotFound() {
+  document.getElementById('root').innerHTML = `
+    <div class="page">
+      <div class="not-found">
+        <div class="not-found-logo">${yumlistLogo(130)}</div>
+        <div class="empty-state-title">Restaurante no encontrado</div>
+        <p class="empty-state-body">Este enlace no corresponde a ningún restaurante en yumlist.</p>
+      </div>
+    </div>`;
+}
+
+init();
+</script>
+</body>
+</html>
