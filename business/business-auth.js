@@ -219,7 +219,7 @@ function buildSidebar(account, activePage) {
 
   const badgeClass = { verified: 'badge-verified', rejected: 'badge-rejected', pending: 'badge-pending' }[status] ?? 'badge-pending';
   const badgeText  = { verified: 'Verificado ✓', rejected: 'Rechazado', pending: 'Pendiente de verificación' }[status] ?? 'Pendiente';
-  const planLabel  = { free: 'Free', pro: 'Pro', premium: 'Premium' }[plan] ?? 'Free';
+  const planName   = planLabel(plan);
 
   // Not verified yet (or rejected) → the badge is the way back to
   // /business/verificacion, visible from every page in the panel, not just
@@ -230,15 +230,15 @@ function buildSidebar(account, activePage) {
     : `<a href="/business/verificacion" style="text-decoration:none">${statusBadgeInner}</a>`;
 
   const nav = [
-    { href: '/business/dashboard', label: 'Dashboard', tour: 'dashboard',
+    { href: '/business/dashboard', label: 'Panel', tour: 'dashboard',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' },
     { href: '/business/perfil',    label: 'Mi perfil', tour: 'perfil',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
     { href: '/business/carta',     label: 'Carta', tour: 'carta',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>' },
-    { href: '/business/reviews',   label: 'Reviews', tour: 'reviews',
+    { href: '/business/reviews',   label: 'Menciones', tour: 'reviews',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' },
-    { href: '/business/analytics', label: 'Analytics', tour: 'analytics',
+    { href: '/business/analytics', label: 'Métricas', tour: 'analytics',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
     { href: '/business/planes',    label: 'Planes', tour: 'planes',
       icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>' },
@@ -257,7 +257,7 @@ function buildSidebar(account, activePage) {
     <div class="sidebar-restaurant">${account?.restaurant_name ?? '—'}</div>
     <div class="sidebar-status">
       ${statusBadge}
-      <span class="badge badge-plan">${planLabel}</span>
+      <span class="badge badge-plan">${planName}</span>
     </div>
     <nav class="sidebar-nav">
       ${nav.map(n => `<a href="${n.href}" class="sidebar-link${activePage === n.href ? ' active' : ''}" data-tour="${n.tour}">${n.icon} ${n.label}</a>`).join('')}
@@ -269,6 +269,76 @@ function buildSidebar(account, activePage) {
       </button>
     </div>
   </aside>`;
+}
+
+// ── Planes ────────────────────────────────────────────────────────────────────
+// Fuente única del nombre visible de cada plan. Las claves (free/pro/premium)
+// son los valores de business_accounts.plan y NO se traducen; solo el valor.
+// Antes esto estaba copiado en tres sitios y ya había divergido: el sidebar
+// decía "Free" mientras planes.html decía "Gratis" para el mismo plan.
+const PLAN_LABELS = { free: 'Gratis', pro: 'Pro', premium: 'Premium' };
+
+function planLabel(plan) {
+  return PLAN_LABELS[plan] ?? PLAN_LABELS.free;
+}
+
+// ── Errores ───────────────────────────────────────────────────────────────────
+// Supabase (auth, PostgREST y storage) devuelve siempre en inglés, y esos
+// mensajes acababan pintados tal cual delante del hostelero: "new row violates
+// row-level security policy" no le dice nada a nadie.
+//
+// Se empareja por subcadena y no por igualdad porque Supabase interpola datos
+// en muchos mensajes ("...unique constraint \"business_accounts_email_key\"").
+// El orden importa: la primera coincidencia gana, así que lo específico va
+// antes que lo genérico.
+const ERRORES_SUPABASE = [
+  // Auth
+  ['invalid login credentials',        'Email o contraseña incorrectos.'],
+  ['email not confirmed',              'Todavía no has confirmado tu email. Revisa tu correo y pulsa el enlace que te enviamos.'],
+  ['user already registered',          'Ya existe una cuenta con ese email. Prueba a entrar o a recuperar la contraseña.'],
+  ['already been registered',          'Ya existe una cuenta con ese email. Prueba a entrar o a recuperar la contraseña.'],
+  ['password should be at least',      'La contraseña es demasiado corta: necesita al menos 8 caracteres.'],
+  ['new password should be different', 'La contraseña nueva tiene que ser distinta de la anterior.'],
+  ['unable to validate email address', 'El email no tiene un formato válido.'],
+  ['for security purposes',            'Has hecho demasiados intentos seguidos. Espera un minuto y vuelve a probar.'],
+  ['rate limit',                       'Has hecho demasiados intentos seguidos. Espera un minuto y vuelve a probar.'],
+  ['signups not allowed',              'Ahora mismo no se pueden crear cuentas nuevas. Escríbenos a hola@yumlist.app.'],
+  ['token has expired or is invalid',  'Este enlace ha caducado o ya se ha usado. Solicita uno nuevo.'],
+  ['jwt expired',                      'Tu sesión ha caducado. Vuelve a entrar.'],
+  ['auth session missing',             'Tu sesión ha caducado. Vuelve a entrar.'],
+
+  // PostgREST / Postgres
+  ['row-level security',               'No tienes permiso para guardar estos datos. Si crees que es un error, escríbenos a hola@yumlist.app.'],
+  ['duplicate key value',              'Ya existe un registro con esos datos.'],
+  ['violates check constraint',        'Alguno de los datos no es válido. Revisa el formulario y vuelve a intentarlo.'],
+  ['violates foreign key',             'No hemos podido guardar: falta un dato relacionado. Recarga la página y vuelve a intentarlo.'],
+  ['value too long',                   'Uno de los campos es demasiado largo. Acórtalo y vuelve a intentarlo.'],
+  ['not-null constraint',              'Falta rellenar un campo obligatorio.'],
+
+  // Storage
+  ['exceeded the maximum allowed size', 'El archivo es demasiado grande.'],
+  ['mime type',                         'Ese formato de archivo no está admitido.'],
+  ['bucket not found',                  'No hemos podido guardar el archivo. Inténtalo de nuevo en un momento.'],
+
+  // Red
+  ['failed to fetch',                  'No hemos podido conectar. Revisa tu conexión y vuelve a intentarlo.'],
+  ['networkerror',                     'No hemos podido conectar. Revisa tu conexión y vuelve a intentarlo.'],
+  ['load failed',                      'No hemos podido conectar. Revisa tu conexión y vuelve a intentarlo.'],
+];
+
+// Traduce un error de Supabase a un mensaje en español para el usuario.
+// `generico` es lo que se muestra cuando no reconocemos el error — nunca se
+// devuelve el texto original en inglés. El mensaje real va a la consola, que
+// es donde sirve para depurar.
+function traducirError(error, generico) {
+  const bruto = typeof error === 'string' ? error : (error?.message ?? '');
+  if (bruto) console.error('[supabase]', bruto);
+
+  const aguja = bruto.toLowerCase();
+  for (const [patron, mensaje] of ERRORES_SUPABASE) {
+    if (aguja.includes(patron)) return mensaje;
+  }
+  return generico ?? 'Algo ha fallado. Inténtalo de nuevo en un momento.';
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

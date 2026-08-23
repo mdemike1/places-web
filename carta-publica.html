@@ -34,6 +34,14 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 .hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .hero-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,12,0) 0%, rgba(14,13,12,.4) 45%, rgba(14,13,12,.95) 100%); }
 .hero-name-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 12px; max-width: 640px; margin: 0 auto; }
+.back-link {
+  position: absolute; top: 14px; left: 14px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px 7px 10px; border-radius: 100px;
+  background: rgba(14,13,12,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(245,240,232,.16);
+  color: var(--cream); font-family: var(--sans); font-size: 12.5px; text-decoration: none;
+}
 .restaurant-name { font-family: var(--serif); font-weight: 300; font-size: 25px; line-height: 1.15; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,.55); }
 .restaurant-desc { font-size: 13.5px; color: var(--sand); line-height: 1.6; margin: 12px 0 4px; }
 
@@ -139,6 +147,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/alergenos-shared.js"></script>
 <script>
 const SUPABASE_URL = 'https://klkksarpfcohfqirxwoe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsa2tzYXJwZmNvaGZxaXJ4d29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDMwMTUsImV4cCI6MjA4OTYxOTAxNX0.ep8NgjugAIAW07qRdlM4A2ScHEHteDBaRQMOmGKPTtE';
@@ -148,23 +157,6 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // "es sobre este restaurante" se decide igual en toda la plataforma.
 const RESTAURANT_PROXIMITY_M = 50;
 
-const ALLERGENS = [
-  { slug: 'gluten',         label: 'Gluten' },
-  { slug: 'crustaceos',     label: 'Crustáceos' },
-  { slug: 'huevos',         label: 'Huevos' },
-  { slug: 'pescado',        label: 'Pescado' },
-  { slug: 'cacahuetes',     label: 'Cacahuetes' },
-  { slug: 'soja',           label: 'Soja' },
-  { slug: 'lacteos',        label: 'Lácteos' },
-  { slug: 'frutos_cascara', label: 'Frutos de cáscara' },
-  { slug: 'apio',           label: 'Apio' },
-  { slug: 'mostaza',        label: 'Mostaza' },
-  { slug: 'sesamo',         label: 'Sésamo' },
-  { slug: 'sulfitos',       label: 'Sulfitos' },
-  { slug: 'altramuces',     label: 'Altramuces' },
-  { slug: 'moluscos',       label: 'Moluscos' },
-];
-const ALLERGEN_LABELS = Object.fromEntries(ALLERGENS.map(a => [a.slug, a.label]));
 
 function esc(s) {
   return String(s ?? '')
@@ -320,6 +312,28 @@ function getBusinessIdFromUrl() {
 }
 const businessId = getBusinessIdFromUrl();
 
+// El "volver al perfil" solo aparece si de verdad se navegó aquí desde
+// /n/{id} de ESTE mismo negocio — nunca por un parámetro en la URL, que
+// quedaría copiado si alguien comparte o imprime el enlace (y el QR de una
+// mesa, que no viene de ningún sitio, no debe insinuar que sí). document.referrer
+// no viaja con la URL al compartirla, así que en el caso raro de que el
+// navegador lo recorte (in-app browsers, modos de privacidad estrictos) el
+// resultado es simplemente no mostrar el enlace — mejor ausente que
+// apuntando a una página que el visitante no pidió.
+function cameFromProfile() {
+  try {
+    if (!document.referrer) return false;
+    const ref = new URL(document.referrer);
+    return ref.origin === location.origin && ref.pathname === `/n/${businessId}`;
+  } catch (e) {
+    return false;
+  }
+}
+const showBackLink = cameFromProfile();
+const backLinkHtml = showBackLink
+  ? `<a class="back-link" href="/n/${encodeURIComponent(businessId)}">← Perfil</a>`
+  : '';
+
 let account = null;
 let menus = [], sections = [], items = [];
 let activeMenuId = null;
@@ -428,6 +442,7 @@ function heroHtml() {
     <div class="hero-cover">
       ${photoUrl ? `<img class="hero-photo" src="${esc(photoUrl)}" alt="" loading="lazy">` : ''}
       <div class="hero-scrim"></div>
+      ${backLinkHtml}
       <div class="hero-name-wrap"><h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1></div>
     </div>`;
 }

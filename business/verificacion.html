@@ -247,7 +247,7 @@
         .upload(path, file, { upsert: false });
 
       if (storageError) {
-        alerts.innerHTML = `<div class="alert alert-error">Error al subir el documento: ${storageError.message}</div>`;
+        alerts.innerHTML = `<div class="alert alert-error">${esc(traducirError(storageError, 'No hemos podido subir el documento. Inténtalo de nuevo.'))}</div>`;
         uploadBtn.textContent = 'Enviar documento';
         uploadBtn.disabled    = false;
         return;
@@ -261,7 +261,7 @@
       });
 
       if (insertError) {
-        alerts.innerHTML = `<div class="alert alert-error">No se pudo registrar el documento: ${insertError.message}</div>`;
+        alerts.innerHTML = `<div class="alert alert-error">${esc(traducirError(insertError, 'No hemos podido registrar el documento. Inténtalo de nuevo.'))}</div>`;
         uploadBtn.textContent = 'Enviar documento';
         uploadBtn.disabled    = false;
         return;

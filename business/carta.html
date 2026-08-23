@@ -125,28 +125,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
+<script src="/alergenos-shared.js"></script>
 <script src="business-auth.js"></script>
 <script src="qr-shared.js"></script>
 <script src="onboarding-shared.js"></script>
 <script src="tour-shared.js"></script>
 <script>
-const ALLERGENS = [
-  { slug: 'gluten',         label: 'Gluten' },
-  { slug: 'crustaceos',     label: 'Crustáceos' },
-  { slug: 'huevos',         label: 'Huevos' },
-  { slug: 'pescado',        label: 'Pescado' },
-  { slug: 'cacahuetes',     label: 'Cacahuetes' },
-  { slug: 'soja',           label: 'Soja' },
-  { slug: 'lacteos',        label: 'Lácteos' },
-  { slug: 'frutos_cascara', label: 'Frutos de cáscara' },
-  { slug: 'apio',           label: 'Apio' },
-  { slug: 'mostaza',        label: 'Mostaza' },
-  { slug: 'sesamo',         label: 'Sésamo' },
-  { slug: 'sulfitos',       label: 'Sulfitos' },
-  { slug: 'altramuces',     label: 'Altramuces' },
-  { slug: 'moluscos',       label: 'Moluscos' },
-];
-const ALLERGEN_LABELS = Object.fromEntries(ALLERGENS.map(a => [a.slug, a.label]));
 
 let account = null;
 let menus = [];
@@ -298,7 +282,7 @@ async function createMenu() {
   const { data, error } = await sb.from('business_menus')
     .insert({ business_id: account.id, name: name.trim(), sort_order: maxOrder + 1 })
     .select().single();
-  if (error) { alert('Error al crear la carta: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido crear la carta. Inténtalo de nuevo.')); return; }
   await loadMenus();
   activeMenuId = data.id;
   await loadMenuContent(data.id);
@@ -310,7 +294,7 @@ async function renameMenu(id, newName) {
   const menu = menus.find(m => m.id === id);
   if (!name || name === menu.name) { render(); return; }
   const { error } = await sb.from('business_menus').update({ name }).eq('id', id);
-  if (error) { alert('Error al renombrar: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido renombrar. Inténtalo de nuevo.')); return; }
   await loadMenus();
   render();
 }
@@ -318,7 +302,7 @@ async function renameMenu(id, newName) {
 async function toggleMenuVisible(id) {
   const menu = menus.find(m => m.id === id);
   const { error } = await sb.from('business_menus').update({ visible: !menu.visible }).eq('id', id);
-  if (error) { alert('Error: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido guardar el cambio. Inténtalo de nuevo.')); return; }
   await loadMenus();
   render();
 }
@@ -343,7 +327,7 @@ async function deleteMenu(id) {
   const photosToRemove = (id === activeMenuId ? items : []).map(i => storagePathFromUrl(i.photo_url)).filter(Boolean);
 
   const { error } = await sb.from('business_menus').delete().eq('id', id);
-  if (error) { alert('Error al borrar: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido borrar. Inténtalo de nuevo.')); return; }
   if (photosToRemove.length) sb.storage.from('business-docs').remove(photosToRemove);
 
   if (id === activeMenuId) { activeMenuId = null; sections = []; items = []; }
@@ -476,7 +460,7 @@ async function createSection() {
   const maxOrder = sections.reduce((m, s) => Math.max(m, s.sort_order), -1);
   const { error } = await sb.from('business_menu_sections')
     .insert({ menu_id: activeMenuId, business_id: account.id, name: name.trim(), sort_order: maxOrder + 1 });
-  if (error) { alert('Error al crear la sección: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido crear la sección. Inténtalo de nuevo.')); return; }
   await loadMenuContent(activeMenuId);
   render();
 }
@@ -486,7 +470,7 @@ async function renameSection(id, newName) {
   const section = sections.find(s => s.id === id);
   if (!name || name === section.name) { render(); return; }
   const { error } = await sb.from('business_menu_sections').update({ name }).eq('id', id);
-  if (error) { alert('Error al renombrar: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido renombrar. Inténtalo de nuevo.')); return; }
   await loadMenuContent(activeMenuId);
   render();
 }
@@ -511,7 +495,7 @@ async function deleteSection(id) {
   const photosToRemove = items.filter(i => i.section_id === id).map(i => storagePathFromUrl(i.photo_url)).filter(Boolean);
 
   const { error } = await sb.from('business_menu_sections').delete().eq('id', id);
-  if (error) { alert('Error al borrar: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido borrar. Inténtalo de nuevo.')); return; }
   if (photosToRemove.length) sb.storage.from('business-docs').remove(photosToRemove);
 
   await loadMenuContent(activeMenuId);
@@ -693,7 +677,7 @@ async function saveItem(sectionId, existingItemId) {
     const ext = formState.photoFile.name.split('.').pop().toLowerCase();
     const path = `${account.id}/carta/${id}.${ext}`;
     const { error: upErr } = await sb.storage.from('business-docs').upload(path, formState.photoFile, { upsert: true });
-    if (upErr) { alert('Error al subir la foto: ' + upErr.message); return; }
+    if (upErr) { alert(traducirError(upErr, 'No hemos podido subir la foto. Inténtalo de nuevo.')); return; }
 
     // Borra la foto anterior SOLO si la extensión cambió (ruta distinta) — si es
     // la misma ruta, upsert:true ya la sobrescribió; borrar aquí sin comprobarlo
@@ -719,10 +703,10 @@ async function saveItem(sectionId, existingItemId) {
     payload.id = id;
     payload.sort_order = maxOrder + 1;
     const { error } = await sb.from('business_menu_items').insert(payload);
-    if (error) { alert('Error al guardar el plato: ' + error.message); return; }
+    if (error) { alert(traducirError(error, 'No hemos podido guardar el plato. Inténtalo de nuevo.')); return; }
   } else {
     const { error } = await sb.from('business_menu_items').update(payload).eq('id', id);
-    if (error) { alert('Error al guardar el plato: ' + error.message); return; }
+    if (error) { alert(traducirError(error, 'No hemos podido guardar el plato. Inténtalo de nuevo.')); return; }
   }
 
   // En onboarding, en cuanto se guarda el primer plato de todo el negocio
@@ -744,7 +728,7 @@ async function saveItem(sectionId, existingItemId) {
 async function toggleItemAvailable(id) {
   const it = items.find(i => i.id === id);
   const { error } = await sb.from('business_menu_items').update({ available: !it.available }).eq('id', id);
-  if (error) { alert('Error: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido guardar el cambio. Inténtalo de nuevo.')); return; }
   await loadMenuContent(activeMenuId);
   render();
 }
@@ -769,7 +753,7 @@ async function deleteItem(id) {
   if (!confirm(`¿Borrar "${it.name}"?`)) return;
   const oldPath = storagePathFromUrl(it.photo_url);
   const { error } = await sb.from('business_menu_items').delete().eq('id', id);
-  if (error) { alert('Error al borrar: ' + error.message); return; }
+  if (error) { alert(traducirError(error, 'No hemos podido borrar. Inténtalo de nuevo.')); return; }
   if (oldPath) sb.storage.from('business-docs').remove([oldPath]);
   if (openForm === id) openForm = null;
   await loadMenuContent(activeMenuId);

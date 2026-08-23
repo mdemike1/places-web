@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Yumlist Negocios</title>
+<title>Panel — Yumlist Negocios</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e0d0c' rx='8'/><circle cx='11' cy='16' r='8' fill='%23C4622D'/><circle cx='19' cy='16' r='8' fill='%23F5F0E8' fill-opacity='0.15'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
 <div class="app-layout">
   <div id="sidebar-mount"></div>
   <main class="main-content" id="content">
-    <div class="loading">Cargando dashboard…</div>
+    <div class="loading">Cargando el panel…</div>
   </main>
 </div>
 
@@ -153,7 +153,7 @@ async function init() {
     <div class="reviews-list" data-tour="dashboard-menciones">${recentHtml}</div>
 
     ${posts.length > 3 ? `<div style="margin-top:20px;text-align:center">
-      <a href="/business/reviews" class="btn-ghost">Ver todas las reviews →</a>
+      <a href="/business/reviews" class="btn-ghost">Ver todas las menciones →</a>
     </div>` : ''}
   `;
 

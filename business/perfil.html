@@ -807,7 +807,7 @@ async function saveProfile() {
     const path = `${bizAccount.id}/photos/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await sb.storage.from('business-docs').upload(path, file, { upsert: false });
     if (error) {
-      showAlert(`Error subiendo foto: ${error.message}`, 'error');
+      showAlert(traducirError(error, 'No hemos podido subir la foto. Inténtalo de nuevo.'), 'error');
       btn.disabled = false;
       status.textContent = '';
       return;
@@ -851,7 +851,7 @@ async function saveProfile() {
     .eq('id', bizAccount.id);
 
   if (updateError) {
-    showAlert(`Error al guardar: ${updateError.message}`, 'error');
+    showAlert(traducirError(updateError, 'No hemos podido guardar los cambios. Inténtalo de nuevo.'), 'error');
     btn.disabled = false;
     status.textContent = '';
     return;

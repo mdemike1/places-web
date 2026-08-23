@@ -44,7 +44,7 @@ async function init() {
   const plans = [
     {
       id: 'free',
-      name: 'Gratis',
+      name: planLabel('free'),
       price: '0€',
       priceNote: 'para siempre',
       features: [
@@ -57,34 +57,34 @@ async function init() {
     },
     {
       id: 'pro',
-      name: 'Pro',
+      name: planLabel('pro'),
       price: '9,99€',
       priceNote: '+ IVA / mes',
       badge: 'Más popular',
       features: [
-        { text: 'Todo lo del plan Gratis, más:', highlight: true },
+        { text: `Todo lo del plan ${planLabel('free')}, más:`, highlight: true },
         { text: 'Insignia de perfil verificado' },
         { text: 'Ver todos los posts sobre ti' },
-        { text: 'Responder a reviews públicamente' },
-        { text: 'Dashboard de analytics' },
+        { text: 'Responder a las menciones públicamente' },
+        { text: 'Panel de métricas' },
         { text: 'Alertas en tiempo real' },
       ],
-      cta: 'Actualizar a Pro',
+      cta: `Actualizar a ${planLabel('pro')}`,
     },
     {
       id: 'premium',
-      name: 'Premium',
+      name: planLabel('premium'),
       price: '24,99€',
       priceNote: '+ IVA / mes',
       features: [
-        { text: 'Todo lo del plan Pro, más:', highlight: true },
-        { text: 'Analytics avanzados y tendencias' },
+        { text: `Todo lo del plan ${planLabel('pro')}, más:`, highlight: true },
+        { text: 'Métricas avanzadas y tendencias' },
         { text: 'Identificación de embajadores' },
         { text: 'Ofertas exclusivas para usuarios Yumlist' },
         { text: 'Destacado en Discover' },
         { text: 'Publicar eventos en tu perfil' },
       ],
-      cta: 'Actualizar a Premium',
+      cta: `Actualizar a ${planLabel('premium')}`,
     },
   ];
 

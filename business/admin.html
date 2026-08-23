@@ -229,7 +229,7 @@ async function loadPending() {
     .order('created_at', { ascending: true });
 
   if (error) {
-    content.innerHTML = `<div class="alert alert-error">Error al cargar: ${error.message}</div>`;
+    content.innerHTML = `<div class="alert alert-error">${escHtml(traducirError(error, 'No hemos podido cargar las solicitudes.'))}</div>`;
     return;
   }
 
@@ -406,7 +406,7 @@ async function loadReports(filter) {
   const { data, error } = await query;
 
   if (error) {
-    content.innerHTML = `<div class="alert alert-error">Error al cargar reportes: ${error.message}</div>`;
+    content.innerHTML = `<div class="alert alert-error">${escHtml(traducirError(error, 'No hemos podido cargar los reportes.'))}</div>`;
     return;
   }
 
@@ -501,7 +501,7 @@ async function loadUsers() {
   ]);
 
   if (e1 || e2) {
-    content.innerHTML = `<div class="alert alert-error">Error al cargar: ${escHtml((e1 || e2).message)}</div>`;
+    content.innerHTML = `<div class="alert alert-error">${escHtml(traducirError(e1 || e2, 'No hemos podido cargar los usuarios.'))}</div>`;
     return;
   }
 
@@ -581,7 +581,6 @@ function renderBizAccountsTable() {
     if (s === 'rejected') return '<span class="badge badge-status-rejected">Rechazado</span>';
     return '<span class="badge badge-status-pending">Pendiente</span>';
   };
-  const planLabel = p => escHtml({ free: 'Free', pro: 'Pro', premium: 'Premium' }[p] ?? p ?? '—');
 
   el.innerHTML = `
     <div class="users-section-header">
@@ -608,7 +607,7 @@ function renderBizAccountsTable() {
               <td class="cell-email">${escHtml(b.email ?? '—')}</td>
               <td>${escHtml(b.city ?? '—')}</td>
               <td>${statusBadge(b.status)}</td>
-              <td><span class="badge badge-plan-label">${planLabel(b.plan)}</span></td>
+              <td><span class="badge badge-plan-label">${escHtml(planLabel(b.plan))}</span></td>
               <td class="cell-date">${formatDate(b.created_at)}</td>
             </tr>`).join('')}
         </tbody>

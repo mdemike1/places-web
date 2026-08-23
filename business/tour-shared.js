@@ -14,7 +14,7 @@
 // resumen a ciegas de una pantalla que puede haber cambiado.
 
 const TOUR_STOPS = [
-  { key: 'dashboard-intro', page: '/business/dashboard', title: 'Dashboard',
+  { key: 'dashboard-intro', page: '/business/dashboard', title: 'Panel',
     text: 'Aquí ves de un vistazo cómo va tu restaurante en yumlist: menciones recientes y lo último que ha pasado. Es tu punto de partida cada vez que entres.' },
   { key: 'dashboard-stats', page: '/business/dashboard', title: 'Tus números',
     text: 'Estos cuatro datos resumen tu mes: menciones, nota media, cuánta gente te tiene guardado y tus posts totales.' },
@@ -31,12 +31,12 @@ const TOUR_STOPS = [
   { key: 'carta-crear', page: '/business/carta', title: 'Varias cartas',
     text: 'Puedes tener más de una carta (general, mediodía, temporada…). Entra en cada una para añadir secciones y platos.' },
 
-  { key: 'reviews-intro', page: '/business/reviews', title: 'Reviews',
+  { key: 'reviews-intro', page: '/business/reviews', title: 'Menciones',
     text: 'Lo que tus clientes publican sobre ti, siempre con foto real — nada de reseñas anónimas. Con el plan Pro puedes responder directamente.' },
   { key: 'reviews-lista', page: '/business/reviews', title: 'Qué vas a ver aquí',
     text: 'Cada reseña con su nota y su foto real. En cuanto lleguen las primeras, aparecerán en esta lista.' },
 
-  { key: 'analytics-intro', page: '/business/analytics', title: 'Analytics',
+  { key: 'analytics-intro', page: '/business/analytics', title: 'Métricas',
     text: 'Cuánta gente escanea tu QR y abre tu carta. Con el plan Pro ves también qué platos miran más y cuánto tiempo pasan leyendo.' },
   { key: 'analytics-visitas', page: '/business/analytics', title: 'Visitantes de tu carta',
     text: 'Cuánta gente distinta abrió tu carta este mes — la señal más directa de si tu QR y tu enlace están funcionando.' },

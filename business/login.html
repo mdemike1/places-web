@@ -84,7 +84,7 @@
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
     if (error) {
-      alerts.innerHTML = `<div class="alert alert-error">${error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos.' : error.message}</div>`;
+      alerts.innerHTML = `<div class="alert alert-error">${esc(traducirError(error, 'No hemos podido entrar. Inténtalo de nuevo.'))}</div>`;
       btn.textContent = 'Entrar';
       btn.disabled    = false;
       return;

@@ -203,7 +203,7 @@
     const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
 
     if (authError) {
-      alerts.innerHTML = `<div class="alert alert-error">${authError.message}</div>`;
+      alerts.innerHTML = `<div class="alert alert-error">${esc(traducirError(authError, 'No hemos podido crear la cuenta. Inténtalo de nuevo.'))}</div>`;
       btn.textContent = 'Crear cuenta';
       btn.disabled    = false;
       return;
@@ -258,21 +258,18 @@
       const insertBody = await insertRes.json();
 
       if (!insertRes.ok) {
+        // El diagnóstico (código, mensaje de PostgREST y si había sesión, que
+        // distingue el fallo de RLS por confirmación de email activada) va a la
+        // consola. Antes se pintaba en pantalla, incluida una sentencia
+        // CREATE POLICY: instrucciones de desarrollador delante del hostelero.
         const errMsg  = insertBody?.message ?? insertBody?.error_description ?? insertBody?.error ?? JSON.stringify(insertBody);
         const errCode = insertBody?.code    ?? insertRes.status;
-
-        const hint = !sessionAvail
-          ? `<br><strong>Causa detectada:</strong> la confirmación de email está activa en Supabase.
-             El insert se ejecutó como rol <code>anon</code> y la política RLS lo bloqueó.<br>
-             <strong>Solución:</strong> en tu panel Supabase → Authentication → Settings → desactiva
-             <em>"Enable email confirmations"</em>. O añade la siguiente política RLS:<br>
-             <code>CREATE POLICY "insert_own" ON business_accounts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);</code>`
-          : `<br>Revisa las políticas RLS de la tabla <code>business_accounts</code> en Supabase.`;
+        console.error('[registro] insert business_accounts falló:', { errCode, errMsg, sessionAvail });
 
         alerts.innerHTML = `<div class="alert alert-error">
-          Tu cuenta de Auth se creó correctamente, pero no pudimos guardar los datos del restaurante.<br>
-          <strong>Error: ${errMsg}</strong> (código ${errCode})
-          ${hint}
+          Hemos creado tu cuenta, pero no hemos podido guardar los datos de tu restaurante.
+          Entra con tu email y contraseña para terminar el registro.
+          Si vuelve a fallar, escríbenos a <a href="mailto:hola@yumlist.app" class="auth-link">hola@yumlist.app</a> y lo resolvemos nosotros.
         </div>`;
         btn.textContent = 'Intentar de nuevo';
         btn.disabled    = false;
@@ -285,7 +282,7 @@
 
     } catch (fetchErr) {
       console.error('[registro] Network error during insert:', fetchErr);
-      alerts.innerHTML = `<div class="alert alert-error">Error de red al guardar los datos: ${fetchErr.message}</div>`;
+      alerts.innerHTML = `<div class="alert alert-error">${esc(traducirError(fetchErr, 'No hemos podido conectar al guardar los datos. Revisa tu conexión y vuelve a intentarlo.'))}</div>`;
       btn.textContent = 'Intentar de nuevo';
       btn.disabled    = false;
       return;

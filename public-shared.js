@@ -35,6 +35,17 @@ function yumlistLogo(size) {
   </svg>`;
 }
 
+// Solo el isotipo (los dos círculos, sin el texto "yumlist") — para marcas
+// discretas donde el protagonista no debe ser la marca (p. ej. la portada de
+// perfil-publico.html, donde el nombre del restaurante manda).
+function yumlistMark(size) {
+  const w = size || 28;
+  return `<svg width="${w}" viewBox="0 0 30 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="11" cy="18" r="10" fill="#C4622D"/>
+    <circle cx="19" cy="18" r="10" fill="#F5F0E8" fill-opacity="0.15" stroke="#F5F0E8" stroke-width="0.8"/>
+  </svg>`;
+}
+
 // DUPLICADO-HAVERSINE: esta formula existe tambien en otros 4 sitios
 // (places-web: admin.html, business/business-auth.js; yumlist-app: lib/geo.ts,
 // lib/hooks/useBusinessAccount.ts). Busca "DUPLICADO-HAVERSINE" para

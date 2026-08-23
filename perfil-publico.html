@@ -31,6 +31,20 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
 .hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .hero-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,12,0) 0%, rgba(14,13,12,.4) 45%, rgba(14,13,12,.95) 100%); }
 .hero-name-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 12px; max-width: 640px; margin: 0 auto; }
+/* Isotipo, sin texto, arriba a la derecha de la portada — orientación para
+   quien llega desde Instagram o un QR de escaparate sin tener que hacer
+   scroll hasta el pie de página. Es un enlace de verdad (no solo marca): el
+   perfil es un canal de captación, alguien con curiosidad tiene que poder
+   pulsar. Discreto a propósito — el protagonista es el restaurante. */
+.yumlist-mark {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(14,13,12,.4);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  opacity: .85; transition: opacity .2s;
+}
+.yumlist-mark:hover { opacity: 1; }
 .restaurant-name { font-family: var(--serif); font-weight: 300; font-size: 27px; line-height: 1.15; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,.55); }
 .restaurant-desc { font-size: 13.5px; color: var(--sand); line-height: 1.6; margin: 4px 0 18px; }
 .meta-line { font-size: 12.5px; color: rgba(245,240,232,.55); letter-spacing: .01em; margin: 10px 0 0; }
@@ -173,6 +187,7 @@ function heroHtml() {
     <div class="hero-cover">
       ${photoUrl ? `<img class="hero-photo" src="${esc(photoUrl)}" alt="" loading="lazy">` : ''}
       <div class="hero-scrim"></div>
+      <a class="yumlist-mark" href="https://yumlist.app" target="_blank" rel="noopener" aria-label="yumlist">${yumlistMark(22)}</a>
       <div class="hero-name-wrap"><h1 class="restaurant-name">${esc(account.restaurant_name || 'Restaurante')}</h1></div>
     </div>`;
 }
