@@ -58,9 +58,10 @@ async function init() {
     {
       id: 'pro',
       name: planLabel('pro'),
-      price: '14,99€',
-      priceNote: '+ IVA / mes',
-      badge: 'Más popular',
+      price: 'Próximamente',
+      priceNote: 'Te avisaremos antes de activarlo',
+      soon: true,
+      badge: 'Recomendado',
       features: [
         { text: `Todo lo del plan ${planLabel('free')}, más:`, highlight: true },
         { text: 'Insignia de perfil verificado' },
@@ -74,8 +75,9 @@ async function init() {
     {
       id: 'premium',
       name: planLabel('premium'),
-      price: '39,99€',
-      priceNote: '+ IVA / mes',
+      price: 'Próximamente',
+      priceNote: 'Te avisaremos antes de activarlo',
+      soon: true,
       features: [
         { text: `Todo lo del plan ${planLabel('pro')}, más:`, highlight: true },
         { text: 'Métricas avanzadas y tendencias' },
@@ -93,7 +95,7 @@ async function init() {
     return `<div class="plan-card${isCurrent ? ' current' : ''}">
       ${isCurrent ? `<div class="plan-badge">Tu plan actual</div>` : (p.badge ? `<div class="plan-badge" style="background:rgba(245,240,232,.12);color:var(--cream)">${p.badge}</div>` : '')}
       <div class="plan-name">${p.name}</div>
-      <div class="plan-price">${p.price}</div>
+      <div class="plan-price"${p.soon ? ' style="font-style:italic;font-size:clamp(30px,2.8vw,40px)"' : ''}>${p.price}</div>
       <div class="plan-price-note">${p.priceNote}</div>
       <div class="plan-divider"></div>
       <ul class="plan-features">
