@@ -117,7 +117,10 @@
   .plan.pro li{color:rgba(26,25,24,.85)}
   .plan li svg{flex:0 0 auto;margin-top:3px}
   .plan li.hl{font-weight:600}
-  .plans-note{margin-top:22px;font-size:14px;color:var(--t60)}
+  .plan-price.soon{font-style:italic;font-size:clamp(40px,3.8vw,52px)}
+  .plan.pro .plan-price.soon{color:var(--text-dark)}
+  .plans-cta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 28px;margin-top:22px;padding:22px 26px;border-radius:20px;border:1px solid var(--line)}
+  .plans-cta p{font-size:15px;color:var(--t70);max-width:640px}
 
   /* Promise */
   .promise{text-align:center;align-items:center}
@@ -274,10 +277,10 @@
       </ul>
     </div>
     <div class="plan pro rv">
-      <span class="plan-badge">Más popular</span>
+      <span class="plan-badge">Recomendado</span>
       <span class="plan-name">Pro</span>
-      <span class="plan-price">14,99 €</span>
-      <span class="plan-note">+ IVA / mes</span>
+      <span class="plan-price soon">Próximamente</span>
+      <span class="plan-note">Para restaurantes que quieren ver y cuidar todo lo que se dice de ellos</span>
       <hr>
       <ul>
         <li class="hl">Todo lo del plan Gratis, más:</li>
@@ -290,8 +293,8 @@
     </div>
     <div class="plan rv">
       <span class="plan-name">Premium</span>
-      <span class="plan-price">39,99 €</span>
-      <span class="plan-note">+ IVA / mes</span>
+      <span class="plan-price soon">Próximamente</span>
+      <span class="plan-note">Para restaurantes que quieren ir un paso más allá</span>
       <hr>
       <ul>
         <li class="hl">Todo lo del plan Pro, más:</li>
@@ -303,7 +306,7 @@
       </ul>
     </div>
   </div>
-  <p class="plans-note">Empieza gratis. Los planes de pago se activarán próximamente y te avisaremos antes.</p>
+  <div class="plans-cta rv"><p>Los planes Pro y Premium llegarán en breve. Los restaurantes de la lista de espera conocerán las condiciones antes que nadie.</p><a class="btn btn-ghost" href="#waitlist">Quiero estar en la lista</a></div>
 </section>
 
 <!-- Promesa -->
