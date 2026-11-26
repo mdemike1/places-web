@@ -146,7 +146,7 @@ body { background: var(--ink); color: var(--cream); font-family: var(--sans); mi
   <div class="page"><div class="loading">Cargando carta…</div></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 <script src="/alergenos-shared.js"></script>
 <script>
 const SUPABASE_URL = 'https://klkksarpfcohfqirxwoe.supabase.co';
@@ -162,6 +162,13 @@ function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
+
+// Solo deja pasar enlaces http(s). Bloquea javascript:, data:, etc. que un
+// restaurante podría guardar en booking_url para ejecutar código en la página.
+function safeUrl(u) {
+  const s = String(u ?? '').trim();
+  return /^https?:\/\//i.test(s) ? s : '';
 }
 
 function fmtPrice(n) { return Number(n).toFixed(2).replace('.', ','); }
@@ -589,8 +596,8 @@ function renderYumlistFooter() {
     const handle = String(account.instagram).replace(/^@/, '');
     extraLinks.push(`<a href="https://instagram.com/${esc(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a>`);
   }
-  if (account.booking_url) {
-    extraLinks.push(`<a href="${esc(account.booking_url)}" target="_blank" rel="noopener">Reservar</a>`);
+  if (safeUrl(account.booking_url)) {
+    extraLinks.push(`<a href="${esc(safeUrl(account.booking_url))}" target="_blank" rel="noopener">Reservar</a>`);
   }
 
   wrap.innerHTML = `

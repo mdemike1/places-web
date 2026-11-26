@@ -123,8 +123,8 @@
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js" integrity="sha384-e9EFD6BGC90bkW9aDV5xbbBfzwN7G8YImHao2lfLVKV/hPB0E0go+H3I64h7oHtA" crossorigin="anonymous"></script>
 <script src="/alergenos-shared.js"></script>
 <script src="business-auth.js"></script>
 <script src="qr-shared.js"></script>
@@ -418,7 +418,7 @@ function renderItemRows(sectionId, sectionItems) {
       ? `<div class="item-allergens">${it.allergens.map(a => `<span class="allergen-chip">${esc(ALLERGEN_LABELS[a] ?? a)}</span>`).join('')}</div>`
       : '';
     const thumb = it.photo_url
-      ? `<img class="item-thumb" src="${it.photo_url}" alt="">`
+      ? `<img class="item-thumb" src="${esc(it.photo_url)}" alt="">`
       : `<div class="item-thumb-empty">Sin foto</div>`;
 
     return `
