@@ -775,8 +775,8 @@ async function loadResumen() {
     sessCloseRes, pSessCloseRes,
     postViewRes,
   ] = await Promise.allSettled([
-    (() => { let q = sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user').gte('created_at',F.from).lte('created_at',F.to); if(F.city) q=q.eq('city',F.city); return q; })(),
-    (() => { let q = sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user').gte('created_at',F.prevFrom).lte('created_at',F.prevTo); if(F.city) q=q.eq('city',F.city); return q; })(),
+    (() => { let q = sb.from('profiles').select('id',{count:'exact',head:true}).eq('role','user').gte('created_at',F.from).lte('created_at',F.to); if(F.city) q=q.eq('city',F.city); return q; })(),
+    (() => { let q = sb.from('profiles').select('id',{count:'exact',head:true}).eq('role','user').gte('created_at',F.prevFrom).lte('created_at',F.prevTo); if(F.city) q=q.eq('city',F.city); return q; })(),
     (() => { let q = sb.from('posts').select('*',{count:'exact',head:true}).gte('created_at',F.from).lte('created_at',F.to); if(F.city) q=q.ilike('address',`%${F.city}%`); return q; })(),
     (() => { let q = sb.from('posts').select('*',{count:'exact',head:true}).gte('created_at',F.prevFrom).lte('created_at',F.prevTo); if(F.city) q=q.ilike('address',`%${F.city}%`); return q; })(),
     (() => { let q = sb.from('posts').select('restaurant').gte('created_at',F.from).lte('created_at',F.to).limit(5000); if(F.city) q=q.ilike('address',`%${F.city}%`); return q; })(),
@@ -851,10 +851,10 @@ async function loadUsuarios() {
   const [wlRes, pwlRes, totRes, ptotRes, newRes, pnewRes, dauRes, pdauRes, wauRes, pwauRes, mauRes, pmauRes, hoursRes, dauChartRes] = await Promise.allSettled([
     sb.from('waitlist').select('*',{count:'exact',head:true}),
     sb.from('waitlist').select('*',{count:'exact',head:true}).lte('created_at', F.prevTo),
-    uFilter(sb.from('profiles').select('*',{count:'exact',head:true})),
-    uFilter(sb.from('profiles').select('*',{count:'exact',head:true}).lte('created_at', F.prevTo)),
-    uFilter(sb.from('profiles').select('*',{count:'exact',head:true}).gte('created_at', F.from).lte('created_at', F.to)),
-    uFilter(sb.from('profiles').select('*',{count:'exact',head:true}).gte('created_at', F.prevFrom).lte('created_at', F.prevTo)),
+    uFilter(sb.from('profiles').select('id',{count:'exact',head:true})),
+    uFilter(sb.from('profiles').select('id',{count:'exact',head:true}).lte('created_at', F.prevTo)),
+    uFilter(sb.from('profiles').select('id',{count:'exact',head:true}).gte('created_at', F.from).lte('created_at', F.to)),
+    uFilter(sb.from('profiles').select('id',{count:'exact',head:true}).gte('created_at', F.prevFrom).lte('created_at', F.prevTo)),
     evFilter(sb.from('user_events').select('user_id'), todayISO),
     evFilter(sb.from('user_events').select('user_id'), new Date(today.getTime()-DAY).toISOString()).lte('created_at', todayISO),
     evFilter(sb.from('user_events').select('user_id'), d7),
@@ -1040,11 +1040,11 @@ async function loadContenido() {
     (() => { let q=sb.from('posts').select('*',{count:'exact',head:true}).gte('created_at',F.prevFrom).lte('created_at',F.prevTo); if(F.city)q=q.ilike('address',`%${F.city}%`); return q; })(),
     (() => { let q=sb.from('posts').select('created_at, selfie_url, restaurant, dish_tags').gte('created_at',F.from).lte('created_at',F.to).limit(5000); if(F.city)q=q.ilike('address',`%${F.city}%`); return q; })(),
     (() => { let q=sb.from('posts').select('selfie_url').gte('created_at',F.prevFrom).lte('created_at',F.prevTo).limit(5000); if(F.city)q=q.ilike('address',`%${F.city}%`); return q; })(),
-    sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user'),
+    sb.from('profiles').select('id',{count:'exact',head:true}).eq('role','user'),
     // conversion: restaurant_viewed vs quiero_ir_tapped
     (() => { let q=sb.from('user_events').select('event_type').in('event_type',['restaurant_viewed','quiero_ir_tapped']).gte('created_at',F.from).lte('created_at',F.to); if(F.userIds)q=q.in('user_id',F.userIds); return q; })(),
     (() => { let q=sb.from('user_events').select('event_type').in('event_type',['restaurant_viewed','quiero_ir_tapped']).gte('created_at',F.prevFrom).lte('created_at',F.prevTo); if(F.userIds)q=q.in('user_id',F.userIds); return q; })(),
-    sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user'), // placeholder
+    sb.from('profiles').select('id',{count:'exact',head:true}).eq('role','user'), // placeholder
   ]);
 
   const total = totRes.status==='fulfilled' ? totRes.value.count : null;
@@ -1106,7 +1106,7 @@ async function loadSocial() {
     sb.from('comments').select('*',{count:'exact',head:true}).gte('created_at',F.from).lte('created_at',F.to),
     sb.from('saved_posts').select('*',{count:'exact',head:true}).gte('created_at',F.from).lte('created_at',F.to),
     sb.from('posts').select('*',{count:'exact',head:true}),
-    sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user'),
+    sb.from('profiles').select('id',{count:'exact',head:true}).eq('role','user'),
     sb.from('friendships').select('sender_id, receiver_id').eq('status','accepted'),
     (() => { let q=sb.from('user_events').select('event_type').in('event_type',['friend_request_sent','friend_request_accepted','friend_request_rejected']).gte('created_at',F.from).lte('created_at',F.to); if(F.userIds)q=q.in('user_id',F.userIds); return q; })(),
     (() => { let q=sb.from('user_events').select('event_type').in('event_type',['friend_request_sent','friend_request_accepted','friend_request_rejected']).gte('created_at',F.prevFrom).lte('created_at',F.prevTo); if(F.userIds)q=q.in('user_id',F.userIds); return q; })(),
@@ -1357,7 +1357,7 @@ async function loadInversorHealth() {
 // en la UI).
 async function loadInversorMarketplace() {
   const [usersCountRes, bizRes, postsRes, allUsersRes, allBizRes] = await Promise.allSettled([
-    sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','user'),
+    sb.from('profiles').select('id',{count:'exact',head:true}).eq('role','user'),
     sb.from('business_accounts').select('id, status, lat, lng'),
     sb.from('posts').select('lat,lng').not('lat','is',null).not('lng','is',null).order('created_at',{ascending:false}).limit(2000),
     sb.from('profiles').select('created_at').eq('role','user').limit(5000),
