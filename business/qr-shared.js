@@ -3,7 +3,7 @@
 // para imprenta) o la librería, se toca aquí una sola vez.
 //
 // Requiere, en este orden, cargados antes en la página:
-//   1. https://cdn.jsdelivr.net/npm/qrcode-generator@.../dist/qrcode.js (define `qrcode`)
+//   1. /assets/vendor/qrcode-generator-2.0.4.js (define `qrcode`)
 //   2. business-auth.js (define `esc()`)
 
 // La URL nunca lleva el nombre del restaurante, solo business_accounts.id — es lo
