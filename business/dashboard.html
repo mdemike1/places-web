@@ -19,7 +19,7 @@
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/assets/vendor/supabase-js-2.119.2.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous"></script>
 <script src="business-auth.js"></script>
 <script src="tour-shared.js"></script>
 <script>
@@ -82,7 +82,7 @@ async function init() {
         const user    = p.profiles ?? {};
         const photos  = Array.isArray(p.photos) ? p.photos : (p.photo_url ? [p.photo_url] : []);
         const photoHtml = photos[0]
-          ? `<img src="${photos[0]}" class="review-photo" alt="" loading="lazy">`
+          ? `<img src="${esc(photos[0])}" class="review-photo" alt="" loading="lazy">`
           : '';
         const tags = (p.dish_tags ?? p.tags ?? []).slice(0, 4)
           .map(t => `<span class="tag">${esc(t)}</span>`).join('');
@@ -94,7 +94,7 @@ async function init() {
           <div class="review-header">
             <div class="review-user">
               <div class="review-avatar">
-                ${user.avatar_url ? `<img src="${user.avatar_url}" alt="">` : ''}
+                ${user.avatar_url ? `<img src="${esc(user.avatar_url)}" alt="">` : ''}
               </div>
               <div>
                 <div class="review-username">${esc(user.username ?? user.display_name ?? 'Usuario')}</div>
@@ -104,9 +104,9 @@ async function init() {
           </div>
           ${photoHtml}
           <div class="review-ratings">
-            <div class="rating-item"><div class="rating-dot"></div>Comida: ${food}</div>
-            ${service !== '—' ? `<div class="rating-item"><div class="rating-dot"></div>Servicio: ${service}</div>` : ''}
-            ${price !== '—'   ? `<div class="rating-item"><div class="rating-dot"></div>Precio: ${price}</div>` : ''}
+            <div class="rating-item"><div class="rating-dot"></div>Comida: ${esc(food)}</div>
+            ${service !== '—' ? `<div class="rating-item"><div class="rating-dot"></div>Servicio: ${esc(service)}</div>` : ''}
+            ${price !== '—'   ? `<div class="rating-item"><div class="rating-dot"></div>Precio: ${esc(price)}</div>` : ''}
           </div>
           ${p.description ? `<div class="review-description">${esc(p.description)}</div>` : ''}
           ${tags ? `<div class="review-tags">${tags}</div>` : ''}

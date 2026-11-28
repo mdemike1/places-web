@@ -2,7 +2,7 @@
 // Best-effort: the user is already saved in Supabase before this runs, so any
 // failure here is logged and swallowed rather than surfaced to the client.
 
-const { EMAIL_RE, renderEmailHtml, sendViaResend, escapeHtml } = require('./_lib/email');
+const { EMAIL_RE, renderEmailHtml, sendViaResend } = require('./_lib/email');
 
 function userEmail() {
   const subject = 'Ya estás dentro 🍴 bienvenido a yumlist';
@@ -25,11 +25,15 @@ function userEmail() {
   return { subject, html, text };
 }
 
-function businessEmail(restaurantName) {
+// Sin el nombre del restaurante a propósito: este endpoint es público y
+// cualquiera puede llamarlo con el email de un tercero. Si el saludo usara
+// texto que viene en la petición, se podría colar un mensaje (p. ej. un enlace
+// de phishing) en un correo que sale desde yumlist.
+function businessEmail() {
   const subject = 'Tu restaurante ya está en la lista de espera de yumlist';
   const heading = 'Ya estás en la lista';
-  const greetingHtml = restaurantName ? `Hola, ${escapeHtml(restaurantName)}` : 'Hola';
-  const greetingText = restaurantName ? `Hola, ${restaurantName}` : 'Hola';
+  const greetingHtml = 'Hola';
+  const greetingText = 'Hola';
   const bodyHtml = `
     <p style="margin:0 0 16px;">${greetingHtml}</p>
     <p style="margin:0 0 16px;">Gracias por apuntar tu restaurante a yumlist. Cuando abramos el panel de negocios, serás de los primeros en entrar y reclamar tu perfil.</p>
@@ -70,7 +74,6 @@ module.exports = async function handler(req, res) {
 
   const email = rawEmail.toLowerCase();
   const audience = body.type === 'business' ? 'business' : 'user';
-  const restaurantName = typeof body.restaurant_name === 'string' ? body.restaurant_name.trim().slice(0, 200) : '';
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -78,7 +81,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, sent: false });
   }
 
-  const { subject, html, text } = audience === 'business' ? businessEmail(restaurantName) : userEmail();
+  const { subject, html, text } = audience === 'business' ? businessEmail() : userEmail();
 
   try {
     await sendViaResend({ apiKey, to: email, subject, html, text });

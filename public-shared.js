@@ -19,6 +19,13 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
 }
 
+// Solo deja pasar enlaces http(s). Bloquea javascript:, data:, etc. que un
+// restaurante podría guardar en booking_url para ejecutar código en la página.
+function safeUrl(u) {
+  const s = String(u ?? '').trim();
+  return /^https?:\/\//i.test(s) ? s : '';
+}
+
 function fmtPrice(n) { return Number(n).toFixed(2).replace('.', ','); }
 
 function avg(arr) {
