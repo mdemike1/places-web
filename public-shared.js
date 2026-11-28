@@ -77,13 +77,10 @@ function haversineM(la1, lo1, la2, lo2) {
 // select() con nombre explícito de columna que no existe es un error 42703).
 async function fetchNearbyPosts(account) {
   if (!account?.lat || !account?.lng) return [];
-  const delta = 0.0007; // ~75m de caja, filtro exacto a 50m con Haversine después
-  const { data } = await sb.from('posts')
-    .select('photo_url, lat, lng, rating_food, rating_service, rating_price, created_at')
-    .gte('lat', account.lat - delta).lte('lat', account.lat + delta)
-    .gte('lng', account.lng - delta).lte('lng', account.lng + delta)
-    .order('created_at', { ascending: false })
-    .limit(60);
+  // Los posts no se pueden leer sin cuenta: la función public_restaurant_posts
+  // devuelve solo foto/coordenadas/notas de perfiles no privados alrededor de
+  // este restaurante verificado (sin user_id).
+  const { data } = await sb.rpc('public_restaurant_posts', { p_business_id: account.id });
 
   if (!data) return [];
   return data.filter(p => p.lat && p.lng && haversineM(account.lat, account.lng, p.lat, p.lng) <= RESTAURANT_PROXIMITY_M);
