@@ -131,6 +131,8 @@
     const status    = document.getElementById('geocode-status');
 
     if (!direccion || !ciudad) return;
+    // Dirección sin tocar desde la ficha reclamada: sus coordenadas ya son las buenas
+    if (placePrefill && direccion === placePrefill.direccion && ciudad === placePrefill.ciudad) return;
 
     status.textContent = 'Buscando coordenadas...';
     status.className   = 'geocode-status geocode-loading';
@@ -158,21 +160,32 @@
   // Se rellenan nombre, ciudad y dirección con los de la ficha, y el id del sitio se
   // guarda en business_accounts.claimed_place_id; al verificar la cuenta, la base de
   // datos vincula esa ficha al restaurante (trigger places_vincular_negocio).
+  // Si el insert falla (p. ej. con la confirmación de email activada) y el usuario
+  // termina el registro más tarde, el sitio reclamado se recupera de aquí.
+  const PLACE_KEY = 'yumlist_claimed_place';
   let claimedPlaceId = null;
-  (async () => {
+  let placePrefill = null;          // dirección y ciudad que vinieron de la ficha
+  const placeReady = (async () => {
     const qs = new URLSearchParams(location.search);
     const nameParam = (qs.get('name') || '').trim().slice(0, 120);
     if (nameParam && !document.getElementById('nombre').value) {
       document.getElementById('nombre').value = nameParam;
     }
-    const placeParam = qs.get('place') || '';
+    let placeParam = qs.get('place') || '';
+    try { if (!placeParam) placeParam = localStorage.getItem(PLACE_KEY) || ''; } catch (_) {}
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(placeParam)) return;
     const { data: place } = await sb.from('places')
       .select('id, name, address, city, lat, lng, business_account_id')
       .eq('id', placeParam)
       .maybeSingle();
-    if (!place || place.business_account_id) return;   // no existe o ya lo tiene otro
+    if (!place) return;
+    if (place.business_account_id) {
+      document.getElementById('alert-container').innerHTML =
+        '<div class="alert alert-warning">Este perfil ya lo ha reclamado otro restaurante. Si es el tuyo, escríbenos a <a href="mailto:hola@yumlist.app" class="auth-link">hola@yumlist.app</a> y lo revisamos.</div>';
+      return;
+    }
     claimedPlaceId = place.id;
+    try { localStorage.setItem(PLACE_KEY, place.id); } catch (_) {}
     const set = (id, v) => { const el = document.getElementById(id); if (v && !el.value) el.value = v; };
     set('nombre', place.name);
     set('ciudad', place.city);
@@ -183,8 +196,12 @@
     if (place.lat && place.lng) {
       document.getElementById('lat').value = place.lat;
       document.getElementById('lng').value = place.lng;
+      placePrefill = {
+        direccion: document.getElementById('direccion').value.trim(),
+        ciudad: document.getElementById('ciudad').value.trim(),
+      };
     }
-  })();
+  })().catch(e => console.warn('[registro] ficha reclamada:', e));
 
   document.getElementById('direccion').addEventListener('blur', runGeocode);
   document.getElementById('ciudad').addEventListener('blur', () => {
@@ -196,6 +213,7 @@
     e.preventDefault();
     const alerts = document.getElementById('alert-container');
     const btn    = document.getElementById('submit-btn');
+    await placeReady;               // que claimed_place_id no vaya vacío por enviar muy rápido
     alerts.innerHTML = '';
 
     const email    = document.getElementById('email').value.trim();
@@ -333,6 +351,7 @@
     // Store business_id for verificacion.html (fallback when session is delayed)
     if (insertedId) sessionStorage.setItem('biz_id', insertedId);
 
+    try { localStorage.removeItem(PLACE_KEY); } catch (_) {}
     window.location.replace('/business/onboarding');
   });
 
