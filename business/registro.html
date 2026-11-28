@@ -154,6 +154,38 @@
     }
   }
 
+  // Viene de "Reclamar este perfil" en la app: /business/registro?name=...&place=<id>.
+  // Se rellenan nombre, ciudad y dirección con los de la ficha, y el id del sitio se
+  // guarda en business_accounts.claimed_place_id; al verificar la cuenta, la base de
+  // datos vincula esa ficha al restaurante (trigger places_vincular_negocio).
+  let claimedPlaceId = null;
+  (async () => {
+    const qs = new URLSearchParams(location.search);
+    const nameParam = (qs.get('name') || '').trim().slice(0, 120);
+    if (nameParam && !document.getElementById('nombre').value) {
+      document.getElementById('nombre').value = nameParam;
+    }
+    const placeParam = qs.get('place') || '';
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(placeParam)) return;
+    const { data: place } = await sb.from('places')
+      .select('id, name, address, city, lat, lng, business_account_id')
+      .eq('id', placeParam)
+      .maybeSingle();
+    if (!place || place.business_account_id) return;   // no existe o ya lo tiene otro
+    claimedPlaceId = place.id;
+    const set = (id, v) => { const el = document.getElementById(id); if (v && !el.value) el.value = v; };
+    set('nombre', place.name);
+    set('ciudad', place.city);
+    const calle = place.city && place.address?.endsWith(`, ${place.city}`)
+      ? place.address.slice(0, -(place.city.length + 2))
+      : place.address;
+    set('direccion', calle);
+    if (place.lat && place.lng) {
+      document.getElementById('lat').value = place.lat;
+      document.getElementById('lng').value = place.lng;
+    }
+  })();
+
   document.getElementById('direccion').addEventListener('blur', runGeocode);
   document.getElementById('ciudad').addEventListener('blur', () => {
     if (document.getElementById('direccion').value.trim()) runGeocode();
@@ -250,6 +282,7 @@
           address_components: geocodedAddressComponents,
           lat:                lat,
           lng:                lng,
+          claimed_place_id:   claimedPlaceId,
           status:             'pending',
           plan:               'free'
         })
